@@ -6,12 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from rest_pollen.authentication import TokenPayload, get_current_user
+from rest_pollen.apis.wedatanation import app as wedatanation_app
 from pypollsdk.model import run_model
 
 
 load_dotenv()
 
 app = FastAPI()
+
+
+app.mount("/wedatanation", wedatanation_app)
 
 class PollenRequest(BaseModel):
     image: str

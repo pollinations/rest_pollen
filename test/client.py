@@ -1,7 +1,12 @@
 import requests
 from utils import generate_test_token
 
-request = {"image": "test-image", "input": {"test": "test"}}
+request = {
+    "image": "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/stable-diffusion-private",
+    "input": {
+        "prompts": "A knight on a horse made out of stars and a galactic nebula"
+    }
+}
 
 
 response = requests.post(
@@ -11,3 +16,4 @@ response = requests.post(
 )
 
 print(response, response.text)
+breakpoint()

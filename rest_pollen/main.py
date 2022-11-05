@@ -6,15 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from rest_pollen.authentication import TokenPayload, get_current_user
-
-# from pypollsdk.model import run_model  # noqa: F401
+from pypollsdk.model import run_model
 
 
 load_dotenv()
 
-
 app = FastAPI()
-
 
 class PollenRequest(BaseModel):
     image: str
@@ -26,8 +23,6 @@ class PollenResponse(BaseModel):
     input: dict
     output: dict
 
-
-app = FastAPI()
 
 
 origins = [
@@ -61,12 +56,11 @@ async def whoami(user: TokenPayload = Depends(get_current_user)):
 async def generate(
     pollen_request: PollenRequest, user: TokenPayload = Depends(get_current_user)
 ) -> PollenResponse:
-    # response = run_model(pollen_request.image, pollen_request.input)
-    response = {"test": "test"}
+    response = run_model(pollen_request.image, pollen_request.input)
     pollen_response = PollenResponse(
         image=pollen_request.image,
         input=pollen_request.input,
-        output=response,
+        output=response["output"],
     )
     return pollen_response
 

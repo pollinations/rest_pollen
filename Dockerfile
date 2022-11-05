@@ -31,6 +31,8 @@ RUN mkdir -p $ipfs_root
 RUN mkdir -p $ipfs_root/input
 RUN mkdir -p $ipfs_root/output
 
+RUN touch invalidate-docker-cache
+
 RUN git clone https://github.com/pollinations/pollinations-ipfs.git
 RUN cd /app/pollinations-ipfs && git checkout parseable-response-from-runModel && npm run install_backend
 

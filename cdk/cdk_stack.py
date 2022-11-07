@@ -8,7 +8,10 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_secretsmanager as sm
 from constructs import Construct
 
-certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/49806058-fc9a-4b90-9caa-fcaaf8e4496d"
+certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/6f66a681-ce7a-4d57-afbc-cfdbca17972e"
+jwt_secret_arn = (
+    "arn:aws:secretsmanager:us-east-1:614871946825:secret:supabase-jwt-secret-cnJpRy"
+)
 
 
 class CdkStack(Stack):
@@ -33,7 +36,6 @@ class CdkStack(Stack):
             "FargateContainerRole",
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
         )
-        role.add_to_policy(iam.PolicyStatement(actions=["sqs:*"], resources=["*"]))
 
         certificate = certificatemanager.Certificate.from_certificate_arn(
             self, "pollinationsworker", certificate_arn
@@ -62,7 +64,7 @@ class CdkStack(Stack):
                         sm.Secret.from_secret_attributes(
                             self,
                             "secret_key",
-                            secret_complete_arn="arn:aws:secretsmanager:us-east-1:614871946825:secret:token-secret-key-zK8E2a",
+                            secret_complete_arn=jwt_secret_arn,
                         )
                     )
                 },

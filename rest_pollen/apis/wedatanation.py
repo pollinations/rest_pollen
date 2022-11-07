@@ -1,25 +1,35 @@
+import random
+from typing import List
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from pypollsdk.model import run_model
 
+from rest_pollen.apis.avatars_v0 import avatars
 from rest_pollen.authentication import TokenPayload, get_current_user
+
+# from pypollsdk.model import run_model
+
 
 app = FastAPI()
 
 AVATAR_IMAGE = (
     "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/wedatanation-pick-avatar"
 )
-INDEX_CID = ""
+INDEX_ZIP = "https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip"
 
 
 class AvatarRequest(BaseModel):
     description: str
+    num_suggestions: int
+    user_id: str
 
 
 class AvatarResponse(BaseModel):
-    input: dict
-    output: dict
+    description: str
+    num_suggestions: int
+    user_id: str
+    images: List[str]
 
 
 app = FastAPI()
@@ -51,11 +61,22 @@ async def root():
 async def generate(
     avatar_request: AvatarRequest, user: TokenPayload = Depends(get_current_user)
 ) -> AvatarResponse:
-    response = run_model(
-        AVATAR_IMAGE, {"index_cid": INDEX_CID, "prompt": avatar_request.description}
-    )
+    # response = run_model(
+    #     AVATAR_IMAGE,
+    #     {
+    #         "index_zip": INDEX_ZIP,
+    #         "prompt": avatar_request.description,
+    #         "user_id": avatar_request.user_id,
+    #     },
+    # )
+    # pollen_response = AvatarResponse(
+    #     input=avatar_request.input,
+    #     output=response["output"],
+    # )
     pollen_response = AvatarResponse(
-        input=avatar_request.input,
-        output=response["output"],
+        description=avatar_request.description,
+        num_suggestions=avatar_request.num_suggestions,
+        user_id=avatar_request.user_id,
+        images=[random.choice(avatars) for _ in range(avatar_request.num_suggestions)],
     )
     return pollen_response

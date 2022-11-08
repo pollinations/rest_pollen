@@ -27,6 +27,3 @@ def generate_wedatanation_token() -> str:
     }
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
     return encoded_jwt
-
-
-print(generate_wedatanation_token())

@@ -8,7 +8,7 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_secretsmanager as sm
 from constructs import Construct
 
-certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/6f66a681-ce7a-4d57-afbc-cfdbca17972e"
+certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/226b3e6a-612f-449a-ae71-5d45648246f1"
 jwt_secret_arn = (
     "arn:aws:secretsmanager:us-east-1:614871946825:secret:supabase-jwt-secret-cnJpRy"
 )

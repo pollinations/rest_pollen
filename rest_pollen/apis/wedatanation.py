@@ -30,6 +30,7 @@ class AvatarResponse(BaseModel):
     num_suggestions: int
     user_id: str
     images: List[str]
+    reserved: bool
 
 
 app = FastAPI()
@@ -78,5 +79,12 @@ async def generate(
         num_suggestions=avatar_request.num_suggestions,
         user_id=avatar_request.user_id,
         images=[random.choice(avatars) for _ in range(avatar_request.num_suggestions)],
+        reserved=False,
     )
     return pollen_response
+
+
+@app.post("/avatar/reserve")
+async def mark_as_used(avatar: AvatarResponse):
+    avatar.reserved = True
+    return avatar

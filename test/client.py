@@ -29,6 +29,13 @@ def wedatanation_client():
         json=request,
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
+    avatar = response.json()
+    print(avatar)
+    response = requests.post(
+        "http://localhost:5000/wedatanation/avatar/reserve",
+        json=avatar,
+        headers={"Authorization": f"Bearer {generate_test_token()}"},
+    )
     print(response.json())
 
 

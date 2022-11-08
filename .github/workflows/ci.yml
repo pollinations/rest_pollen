@@ -35,11 +35,11 @@ jobs:
       - name: Test docker image
         run: |
           cp .env.example .env
-          docker run --rm -d --name server -p --env-file .env 5000:5000 image:test
+          docker run --rm -d --name server -p 5000:5000 --env-file .env image:test
           sleep 5
           curl --fail localhost:5000
           docker kill server
-          docker run  --env-file .env image:test pytest --cov .
+          docker run --env-file .env image:test pytest --cov .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1

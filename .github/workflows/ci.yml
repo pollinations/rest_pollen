@@ -7,7 +7,7 @@ on:
     tags: "*"
 
 jobs:
-  test:
+  linting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Install dependencies with pipenv
+      - name: Install dependencies with pip
         run: |
           pip install ."[test]"
       - run: isort --diff .
@@ -37,8 +37,8 @@ jobs:
           docker run --rm -d --name server -p 5000:5000 image:test
           sleep 5
           curl --fail localhost:5000
-          pytest test
           docker kill server
+          docker run image:test pytest --cov .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1

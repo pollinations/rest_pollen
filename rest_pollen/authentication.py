@@ -14,7 +14,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 JWT_SECRET = os.getenv("JWT_SECRET")
 ALGORITHM = "HS256"
 
-
 reuseable_oauth = OAuth2PasswordBearer(tokenUrl="/login", scheme_name="JWT")
 
 

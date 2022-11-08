@@ -4,14 +4,18 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
-from rest_pollen.authentication import TokenPayload, get_current_user
 from pypollsdk.model import run_model
 
+from rest_pollen.apis.wedatanation import app as wedatanation_app
+from rest_pollen.authentication import TokenPayload, get_current_user
 
 load_dotenv()
 
 app = FastAPI()
+
+
+app.mount("/wedatanation", wedatanation_app)
+
 
 class PollenRequest(BaseModel):
     image: str
@@ -22,7 +26,6 @@ class PollenResponse(BaseModel):
     image: str
     input: dict
     output: dict
-
 
 
 origins = [

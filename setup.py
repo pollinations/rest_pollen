@@ -14,15 +14,15 @@ setup(
         "uvicorn",
         "python-dotenv",
         "python-jose[cryptography]",
+        "pytest",
+        "pytest-cov",
     ],
     extras_require={
         "test": [
-            "pytest",
             "pylint!=2.5.0",
             "black",
             "mypy",
             "flake8",
-            "pytest-cov",
             "requests",
         ],
     },

@@ -11,7 +11,7 @@ def get_wedatanation_request():
     request = {
         "index_zip": "https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip",
         "description": "An astronaut sloth",
-        "user_id": "123",
+        "user_id": "1234",
         "num_suggestions": 5,
     }
     return request

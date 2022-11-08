@@ -1,15 +1,11 @@
-import random
 from typing import List
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pypollsdk.model import run_model
 
-from rest_pollen.apis.avatars_v0 import avatars
 from rest_pollen.authentication import TokenPayload, get_current_user
-
-# from pypollsdk.model import run_model
-
 
 app = FastAPI()
 
@@ -62,24 +58,17 @@ async def root():
 async def generate(
     avatar_request: AvatarRequest, user: TokenPayload = Depends(get_current_user)
 ) -> AvatarResponse:
-    # response = run_model(
-    #     AVATAR_IMAGE,
-    #     {
-    #         "index_zip": INDEX_ZIP,
-    #         "prompt": avatar_request.description,
-    #         "user_id": avatar_request.user_id,
-    #     },
-    # )
-    # pollen_response = AvatarResponse(
-    #     input=avatar_request.input,
-    #     output=response["output"],
-    # )
+    response = run_model(
+        AVATAR_IMAGE,
+        {
+            "index_zip": INDEX_ZIP,
+            "prompt": avatar_request.description,
+            "user_id": avatar_request.user_id,
+        },
+    )
     pollen_response = AvatarResponse(
-        description=avatar_request.description,
-        num_suggestions=avatar_request.num_suggestions,
-        user_id=avatar_request.user_id,
-        images=[random.choice(avatars) for _ in range(avatar_request.num_suggestions)],
-        reserved=False,
+        input=avatar_request.input,
+        output=response["output"],
     )
     return pollen_response
 

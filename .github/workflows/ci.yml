@@ -34,7 +34,7 @@ jobs:
       
       - name: Test docker image
         run: |
-          docker run --rm -d --name server -p 5000:5000 test
+          docker run --rm -d --name server -p 5000:5000 image:test
           sleep 5
           curl --fail localhost:5000
           pytest test

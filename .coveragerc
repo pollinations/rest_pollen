@@ -3,6 +3,11 @@ source = rest_pollen
 omit = rest_pollen/__main__.py
 
 [report]
+omit = 
+    test/*
+    app.py
+    cdk/*
+    setup.py
 exclude_lines =
     # Have to re-enable the standard pragma
     pragma: no cover

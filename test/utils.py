@@ -17,3 +17,16 @@ def generate_test_token() -> str:
     }
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def generate_wedatanation_token() -> str:
+    """For debugging only: generate a token for a given username"""
+    to_encode = {
+        "sub": "wedatanation-dev",
+        "exp": dt.datetime.utcnow() + dt.timedelta(days=180),
+    }
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+print(generate_wedatanation_token())

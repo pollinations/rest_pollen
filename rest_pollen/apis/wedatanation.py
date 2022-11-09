@@ -12,7 +12,7 @@ app = FastAPI()
 AVATAR_IMAGE = (
     "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/wedatanation-pick-avatar"
 )
-INDEX_ZIP = "https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip"
+INDEX_ZIP = "url:https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip"
 
 
 class AvatarRequest(BaseModel):

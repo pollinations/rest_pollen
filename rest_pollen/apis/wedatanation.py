@@ -66,9 +66,12 @@ async def generate(
             "user_id": avatar_request.user_id,
         },
     )
+    images = [i.replace("url:", "") for i in response["output"]["images"].split("\n")]
     pollen_response = AvatarResponse(
-        input=avatar_request.input,
-        output=response["output"],
+        description=avatar_request.description,
+        num_suggestions=avatar_request.num_suggestions,
+        user_id=avatar_request.user_id,
+        images=images,
     )
     return pollen_response
 

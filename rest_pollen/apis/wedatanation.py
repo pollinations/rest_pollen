@@ -64,6 +64,7 @@ async def generate(
             "index_zip": INDEX_ZIP,
             "prompt": avatar_request.description,
             "user_id": avatar_request.user_id,
+            "num_results": avatar_request.num_suggestions,
         },
     )
     images = [i.replace("url:", "") for i in response["output"]["images"].split("\n")]

@@ -18,7 +18,7 @@ def get_stablediffusion_request():
 def get_wedatanation_request():
     request = {
         "index_zip": "https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip",
-        "description": "a bear in a suit",
+        "description": "a bear in a nice suit",
         "user_id": "123",
         "num_suggestions": 5,
     }
@@ -32,7 +32,8 @@ def wedatanation_client():
         json=request,
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
-    breakpoint()
+    print(response.text)
+    print(response)
     avatar = response.json()
     print(avatar)
     # response = requests.post(

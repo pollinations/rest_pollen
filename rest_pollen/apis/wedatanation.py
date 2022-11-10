@@ -67,7 +67,7 @@ async def generate(
             "num_results": avatar_request.num_suggestions,
         },
     )
-    images = [i.replace("url:", "") for i in response["output"]["images"].split("\n")]
+    images = [i for i in response["output"]["images"].split("url:") if i != ""]
     pollen_response = AvatarResponse(
         description=avatar_request.description,
         num_suggestions=avatar_request.num_suggestions,

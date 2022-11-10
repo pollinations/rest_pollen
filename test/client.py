@@ -1,6 +1,9 @@
 import requests
 from utils import generate_test_token
 
+backend_url = "https://rest.pollinations.ai"
+backend_url = "http://localhost:6000"
+
 
 def get_stablediffusion_request():
     request = {
@@ -15,7 +18,7 @@ def get_stablediffusion_request():
 def get_wedatanation_request():
     request = {
         "index_zip": "https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip",
-        "description": "A bear in a suit",
+        "description": "a bear in a suit",
         "user_id": "123",
         "num_suggestions": 5,
     }
@@ -25,10 +28,11 @@ def get_wedatanation_request():
 def wedatanation_client():
     request = get_wedatanation_request()
     response = requests.post(
-        "http://localhost:6000/wedatanation/avatar",
+        f"{backend_url}/wedatanation/avatar",
         json=request,
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
+    breakpoint()
     avatar = response.json()
     print(avatar)
     # response = requests.post(

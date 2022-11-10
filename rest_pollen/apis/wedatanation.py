@@ -72,6 +72,7 @@ async def generate(
         num_suggestions=avatar_request.num_suggestions,
         user_id=avatar_request.user_id,
         images=images,
+        reserved=False,
     )
     return pollen_response
 

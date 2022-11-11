@@ -1,3 +1,5 @@
+import os
+
 from aws_cdk import Stack
 from aws_cdk import aws_certificatemanager as certificatemanager
 from aws_cdk import aws_ec2 as ec2
@@ -7,10 +9,19 @@ from aws_cdk import aws_elasticloadbalancingv2 as elb
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_secretsmanager as sm
 from constructs import Construct
+from dotenv import load_dotenv
+
+load_dotenv()
 
 certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/6f66a681-ce7a-4d57-afbc-cfdbca17972e"
 jwt_secret_arn = (
     "arn:aws:secretsmanager:us-east-1:614871946825:secret:supabase-jwt-secret-cnJpRy"
+)
+
+wedatanation_avatar_table = (
+    "wedatanation-avatar"
+    if os.environ.get("DEV_OR_PROD") == "prod"
+    else "wedatanation-avatar-dev"
 )
 
 
@@ -58,6 +69,10 @@ class CdkStack(Stack):
                     "DEBUG": "True",
                     "LOG_LEVEL": "DEBUG",
                     "LOG_FORMAT": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    "wedatanation_avatar_table": wedatanation_avatar_table,
+                    "SUPABASE_API_KEY": os.environ.get("SUPABASE_API_KEY"),
+                    "SUPABASE_URL": os.environ.get("SUPABASE_URL"),
+                    "SUPABASE_ID": os.environ.get("SUPABASE_ID"),
                 },
                 secrets={
                     "JWT_SECRET": ecs.Secret.from_secrets_manager(

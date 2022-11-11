@@ -1,18 +1,28 @@
-from typing import List
+import os
+from typing import List, Optional
+from uuid import uuid4
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pypollsdk.model import run_model
+from supabase import Client, create_client
 
 from rest_pollen.authentication import TokenPayload, get_current_user
 
 app = FastAPI()
 
+url: str = os.environ.get("SUPABASE_URL")
+supabase_api_key: str = os.environ.get("SUPABASE_API_KEY")
+supabase: Client = create_client(url, supabase_api_key)
+
+
 AVATAR_IMAGE = (
     "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/wedatanation-pick-avatar"
 )
 INDEX_ZIP = "url:https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip"
+
+table_name = os.environ.get("wedatanation_avatar_table", "wedatanation-avatar-dev")
 
 
 class AvatarRequest(BaseModel):
@@ -22,8 +32,8 @@ class AvatarRequest(BaseModel):
 
 
 class AvatarResponse(BaseModel):
-    description: str
-    num_suggestions: int
+    description: Optional[str]
+    num_suggestions: Optional[int]
     user_id: str
     images: List[str]
     reserved: bool
@@ -65,6 +75,8 @@ async def generate(
             "prompt": avatar_request.description,
             "user_id": avatar_request.user_id,
             "num_results": avatar_request.num_suggestions,
+            "table_name": table_name,
+            "ignore_cache": uuid4().hex,  # On a new request, we don't want to return the same avatar
         },
     )
     images = [i for i in response["output"]["images"].split("url:") if i != ""]
@@ -78,7 +90,15 @@ async def generate(
     return pollen_response
 
 
+def mark_img_used(img_path, user_id):
+    supabase.table(table_name).insert(
+        {"img_url": img_path, "user_id": user_id}
+    ).execute()
+
+
 @app.post("/avatar/reserve")
 async def mark_as_used(avatar: AvatarResponse):
+    for image in avatar.images:
+        mark_img_used(f"url:{image}", avatar.user_id)
     avatar.reserved = True
     return avatar

@@ -16,6 +16,7 @@ setup(
         "python-jose[cryptography]",
         "pytest",
         "pytest-cov",
+        "supabase",
     ],
     extras_require={
         "test": [

@@ -47,17 +47,17 @@ app.add_middleware(
 
 
 @app.get("/")
-async def root():
+def root():
     return {"healthy": "yes"}
 
 
 @app.get("/user")
-async def whoami(user: TokenPayload = Depends(get_current_user)):
+def whoami(user: TokenPayload = Depends(get_current_user)):
     return user
 
 
 @app.post("/pollen")
-async def generate(
+def generate(
     pollen_request: PollenRequest, user: TokenPayload = Depends(get_current_user)
 ) -> PollenResponse:
     if is_pollinations_backend(pollen_request):

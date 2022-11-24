@@ -9,10 +9,9 @@ client = TestClient(app)
 
 def get_wedatanation_request():
     request = {
-        "index_zip": "https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip",
         "description": "An astronaut sloth",
-        "user_id": "123",
-        "num_suggestions": 5,
+        "user_id": "987",
+        "num_suggestions": 2,
     }
     return request
 
@@ -34,13 +33,14 @@ def test_wedatanation() -> None:
         json=request,
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
-    avatar = response.json()
-    response = client.post(
-        "/wedatanation/avatar/reserve",
-        json=avatar,
-        headers={"Authorization": f"Bearer {generate_test_token()}"},
-    )
     assert response.status_code == 200
+    avatar = response.json()
+    assert len(avatar["images"]) == request["num_suggestions"]
+    # response = client.post(
+    #     "/wedatanation/avatar/reserve",
+    #     json=avatar,
+    #     headers={"Authorization": f"Bearer {generate_test_token()}"},
+    # )
 
 
 if __name__ == "__main__":

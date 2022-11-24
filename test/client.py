@@ -2,7 +2,7 @@ import requests
 from utils import generate_test_token
 
 backend_url = "https://rest.pollinations.ai"
-backend_url = "http://localhost:6000"
+backend_url = "http://localhost:5000"
 
 
 def get_stablediffusion_request():
@@ -21,6 +21,16 @@ def get_wedatanation_request():
         "description": "a nice bear with sunglasses",
         "user_id": "niels",
         "num_suggestions": 2,
+    }
+    return request
+
+
+def get_lemonade_request():
+    request = {
+        "image": "replicate:pollinations/lemonade-preset",
+        "input": {
+            "image": "https://store.pollinations.ai/ipfs/QmejbsQbhi4UsNGEeDSRszpzXv6W6CR61Gk2TZ53vQx5sT?filename=00003.png"
+        },
     }
     return request
 
@@ -44,5 +54,17 @@ def wedatanation_client():
     print(response.json())
 
 
+def lemonade_client():
+    request = get_lemonade_request()
+    response = requests.post(
+        f"{backend_url}/pollen",
+        json=request,
+        headers={"Authorization": f"Bearer {generate_test_token()}"},
+    )
+    print(response.text)
+    print(response)
+
+
 if __name__ == "__main__":
-    wedatanation_client()
+    # wedatanation_client()
+    lemonade_client()

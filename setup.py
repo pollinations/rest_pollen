@@ -17,6 +17,7 @@ setup(
         "pytest",
         "pytest-cov",
         "supabase",
+        "replicate",
     ],
     extras_require={
         "test": [

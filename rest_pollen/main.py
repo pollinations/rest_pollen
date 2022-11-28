@@ -99,7 +99,7 @@ async def websocket_endpoint(websocket: WebSocket):
             )
             await websocket.send_json(pollen_response.dict())
             # exit if the prediction is done
-            if not prediction.status in ["starting", "processing"]:  # noqa: E713
+            if prediction.status not in ["starting", "processing"]:
                 break
             time.sleep(1)
     except WebSocketDisconnect:

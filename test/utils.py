@@ -39,4 +39,5 @@ def generate_pollinations_frontend_token() -> str:
     return encoded_jwt
 
 
-print(generate_pollinations_frontend_token())
+if __name__ == "__main__":
+    print(generate_pollinations_frontend_token())

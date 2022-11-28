@@ -69,9 +69,7 @@ def get_dreamachine_request():
     request = {
         # "image": "replicate:pollinations/stable-diffusion-dreamachine",
         "image": "replicate:stability-ai/stable-diffusion",
-        "input": {
-            "prompt": "A knight on a horse made out of stars and a galactic nebula"
-        },
+        "input": {"prompt": "A pizza eating a banana"},
     }
     return request
 

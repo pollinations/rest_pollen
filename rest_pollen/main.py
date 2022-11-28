@@ -45,6 +45,7 @@ origins = [
     "http://localhost:3000",
     "https://pollinations.ai",
     "https://*.pollinations.ai",
+    "wss://*",
     "*",
 ]
 
@@ -154,7 +155,7 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     try:
         response = requests.get(f"{store_url}/pollen/{cid}")
         response.raise_for_status()
-        output = response.json().get("output")
+        output = response.json()
     except requests.exceptions.HTTPError:
         output = None
     return cid, output

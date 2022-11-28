@@ -27,3 +27,16 @@ def generate_wedatanation_token() -> str:
     }
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def generate_pollinations_frontend_token() -> str:
+    """For debugging only: generate a token for a given username"""
+    to_encode = {
+        "sub": "pollinations-generic-frontend",
+        "exp": dt.datetime.utcnow() + dt.timedelta(days=180),
+    }
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+print(generate_pollinations_frontend_token())

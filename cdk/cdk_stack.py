@@ -1,6 +1,6 @@
 import os
 
-from aws_cdk import Stack
+from aws_cdk import Duration, Stack
 from aws_cdk import aws_certificatemanager as certificatemanager
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecs as ecs
@@ -61,7 +61,7 @@ class CdkStack(Stack):
             protocol=elb.ApplicationProtocol.HTTPS,
             certificate=certificate,
             redirect_http=True,
-            desired_count=1,
+            desired_count=2,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=image,
                 container_port=5000,
@@ -73,6 +73,7 @@ class CdkStack(Stack):
                     "SUPABASE_API_KEY": os.environ.get("SUPABASE_API_KEY"),
                     "SUPABASE_URL": os.environ.get("SUPABASE_URL"),
                     "SUPABASE_ID": os.environ.get("SUPABASE_ID"),
+                    "REPLICATE_API_TOKEN": os.environ.get("REPLICATE_API_TOKEN"),
                 },
                 secrets={
                     "JWT_SECRET": ecs.Secret.from_secrets_manager(
@@ -86,6 +87,7 @@ class CdkStack(Stack):
                 # add permission to get SQS queue url and send messages to SQS queue
                 task_role=role,
             ),
+            idle_timeout=Duration.seconds(4000),
             memory_limit_mib=1024,
             cpu=256,
         )  # noqa: F841

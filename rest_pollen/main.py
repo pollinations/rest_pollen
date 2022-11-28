@@ -1,7 +1,8 @@
 import click
+import replicate
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pypollsdk.model import run_model
@@ -46,24 +47,47 @@ app.add_middleware(
 
 
 @app.get("/")
-async def root():
+def root():
     return {"healthy": "yes"}
 
 
 @app.get("/user")
-async def whoami(user: TokenPayload = Depends(get_current_user)):
+def whoami(user: TokenPayload = Depends(get_current_user)):
     return user
 
 
 @app.post("/pollen")
-async def generate(
+def generate(
     pollen_request: PollenRequest, user: TokenPayload = Depends(get_current_user)
 ) -> PollenResponse:
+    if is_pollinations_backend(pollen_request):
+        return run_on_pollinations_infrastructure(pollen_request)
+    elif "replicate:" in pollen_request.image:
+        return run_on_replicate(pollen_request)
+    else:
+        raise HTTPException(status_code=400, detail="Unknown model backend")
+
+
+def is_pollinations_backend(pollen_request: PollenRequest) -> bool:
+    return "amazonaws" in pollen_request.image
+
+
+def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenResponse:
     response = run_model(pollen_request.image, pollen_request.input)
     pollen_response = PollenResponse(
         image=pollen_request.image,
         input=pollen_request.input,
         output=response["output"],
+    )
+    return pollen_response
+
+
+def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
+    model_name = pollen_request.image.split(":")[1]
+    model = replicate.models.get(model_name)
+    output = model.predict(**pollen_request.input)
+    pollen_response = PollenResponse(
+        image=pollen_request.image, input=pollen_request.input, output=output
     )
     return pollen_response
 

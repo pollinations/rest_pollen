@@ -1,3 +1,4 @@
+import time
 from typing import List, Optional, Union
 
 import click
@@ -35,7 +36,7 @@ class PollenRequest(BaseModel):
 class PollenResponse(BaseModel):
     image: str
     input: dict
-    output: Union[dict, List]
+    output: Optional[Union[dict, List]]
     status: Optional[str]
 
 
@@ -78,7 +79,7 @@ def generate(
         raise HTTPException(status_code=400, detail="Unknown model backend")
 
 
-@app.websocket("/live")
+@app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     # First get the request json
@@ -86,23 +87,21 @@ async def websocket_endpoint(websocket: WebSocket):
     pollen_request = PollenRequest(**pollen_request_json)
     model_image = pollen_request.image.replace("replicate:", "")
     model = replicate.models.get(model_image).versions.list()[0]
-    prediction = replicate.predictions.create(
-        version=model,
-        # input=pollen_request.input
-        input={"prompts": "test"},
-    )
+    prediction = replicate.predictions.create(version=model, input=pollen_request.input)
     try:
         while True:
+            prediction.reload()
             pollen_response = PollenResponse(
                 image=pollen_request.image,
                 input=pollen_request.input,
                 output=prediction.output,
                 status=prediction.status,
             )
-            websocket.send_json(pollen_response.dict())
-            if not ["starting", "running"].contains(prediction.status):
+            await websocket.send_json(pollen_response.dict())
+            # exit if the prediction is done
+            if not prediction.status in ["starting", "processing"]:  # noqa: E713
                 break
-            prediction.reload()
+            time.sleep(1)
     except WebSocketDisconnect:
         prediction.cancel()
 

@@ -86,25 +86,45 @@ async def websocket_endpoint(websocket: WebSocket):
     # First get the request json
     pollen_request_json = await websocket.receive_json()
     pollen_request = PollenRequest(**pollen_request_json)
-    model_image = pollen_request.image.replace("replicate:", "")
-    model = replicate.models.get(model_image).versions.list()[0]
-    prediction = replicate.predictions.create(version=model, input=pollen_request.input)
-    try:
-        while True:
-            prediction.reload()
-            pollen_response = PollenResponse(
-                image=pollen_request.image,
-                input=pollen_request.input,
-                output=prediction.output,
-                status=prediction.status,
-            )
-            await websocket.send_json(pollen_response.dict())
-            # exit if the prediction is done
-            if prediction.status not in ["starting", "processing"]:
-                break
-            time.sleep(1)
-    except WebSocketDisconnect:
-        prediction.cancel()
+
+    cid, output = get_from_db(pollen_request)
+    exists_in_db = False
+    if output is not None:
+        exists_in_db = True
+        pollen_response = PollenResponse(
+            image=pollen_request.image,
+            input=pollen_request.input,
+            output=output,
+            status="success",
+        )
+        print("Sending from DB")
+        await websocket.send_json(pollen_response.dict())
+    else:
+        model_image = pollen_request.image.replace("replicate:", "")
+        model = replicate.models.get(model_image).versions.list()[0]
+        prediction = replicate.predictions.create(
+            version=model, input=pollen_request.input
+        )
+        try:
+            while True:
+                prediction.reload()
+                pollen_response = PollenResponse(
+                    image=pollen_request.image,
+                    input=pollen_request.input,
+                    output=prediction.output,
+                    status=prediction.status,
+                )
+                await websocket.send_json(pollen_response.dict())
+                # exit if the prediction is done
+                if prediction.status not in ["starting", "processing"]:
+                    break
+                time.sleep(1)
+        except WebSocketDisconnect:
+            prediction.cancel()
+
+    if not exists_in_db:
+        save_to_db(cid, pollen_response)
+    await websocket.close()
 
 
 def is_pollinations_backend(pollen_request: PollenRequest) -> bool:
@@ -149,15 +169,20 @@ def store(data: dict):
 
 def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     cid = store(pollen_request.dict()["input"])
-    supabase.table("pollen").upsert(
-        {"input": cid, "image": pollen_request.image}
-    ).execute()
-    try:
-        response = requests.get(f"{store_url}/pollen/{cid}")
-        response.raise_for_status()
-        output = response.json()
-    except requests.exceptions.HTTPError:
-        output = None
+    db_entry = (
+        supabase.table("pollen")
+        .upsert({"input": cid, "image": pollen_request.image})
+        .execute()
+        .data[0]
+    )
+    output = None
+    if db_entry["success"] is True:
+        try:
+            response = requests.get(f"{store_url}/pollen/{cid}")
+            response.raise_for_status()
+            output = response.json()
+        except requests.exceptions.HTTPError:
+            pass
     return cid, output
 
 

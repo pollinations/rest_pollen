@@ -33,7 +33,8 @@ def get_dreamachine_request():
 if __name__ == "__main__":
     websocket.enableTrace(True)
     ws = websocket.WebSocketApp(
-        "ws://localhost:5000/live",
+        "ws://localhost:5000/ws",
+        # "wss://worker-dev.pollinations.ai/ws",
         on_open=on_open,
         on_message=on_message,
         on_error=on_error,

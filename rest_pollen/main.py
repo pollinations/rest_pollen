@@ -1,21 +1,30 @@
+from typing import List, Optional, Union
+
 import click
 import replicate
+import requests
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pypollsdk.model import run_model
+from starlette.websockets import WebSocketDisconnect
 
+from rest_pollen.apis.dreamachine import app as dreamachine_app
 from rest_pollen.apis.wedatanation import app as wedatanation_app
 from rest_pollen.authentication import TokenPayload, get_current_user
+from rest_pollen.db_client import supabase
 
 load_dotenv()
+store_url = "https://store.pollinations.ai"
+
 
 app = FastAPI()
 
 
 app.mount("/wedatanation", wedatanation_app)
+app.mount("/dreamachine", dreamachine_app)
 
 
 class PollenRequest(BaseModel):
@@ -26,7 +35,8 @@ class PollenRequest(BaseModel):
 class PollenResponse(BaseModel):
     image: str
     input: dict
-    output: dict
+    output: Union[dict, List]
+    status: Optional[str]
 
 
 origins = [
@@ -62,14 +72,47 @@ def generate(
 ) -> PollenResponse:
     if is_pollinations_backend(pollen_request):
         return run_on_pollinations_infrastructure(pollen_request)
-    elif "replicate:" in pollen_request.image:
+    elif is_replicate_backend(pollen_request):
         return run_on_replicate(pollen_request)
     else:
         raise HTTPException(status_code=400, detail="Unknown model backend")
 
 
+@app.websocket("/live")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    # First get the request json
+    pollen_request_json = await websocket.receive_json()
+    pollen_request = PollenRequest(**pollen_request_json)
+    model_image = pollen_request.image.replace("replicate:", "")
+    model = replicate.models.get(model_image).versions.list()[0]
+    prediction = replicate.predictions.create(
+        version=model,
+        # input=pollen_request.input
+        input={"prompts": "test"},
+    )
+    try:
+        while True:
+            pollen_response = PollenResponse(
+                image=pollen_request.image,
+                input=pollen_request.input,
+                output=prediction.output,
+                status=prediction.status,
+            )
+            websocket.send_json(pollen_response.dict())
+            if not ["starting", "running"].contains(prediction.status):
+                break
+            prediction.reload()
+    except WebSocketDisconnect:
+        prediction.cancel()
+
+
 def is_pollinations_backend(pollen_request: PollenRequest) -> bool:
     return "amazonaws" in pollen_request.image
+
+
+def is_replicate_backend(pollen_request: PollenRequest) -> bool:
+    return "replicate:" in pollen_request.image
 
 
 def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenResponse:
@@ -83,13 +126,57 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
 
 
 def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
-    model_name = pollen_request.image.split(":")[1]
-    model = replicate.models.get(model_name)
-    output = model.predict(**pollen_request.input)
+    cid, output = get_from_db(pollen_request)
+    exists_in_db = False
+    if output is not None:
+        exists_in_db = True
+    else:
+        output = run_with_replicate(pollen_request)
     pollen_response = PollenResponse(
         image=pollen_request.image, input=pollen_request.input, output=output
     )
+    if not exists_in_db:
+        save_to_db(cid, pollen_response)
     return pollen_response
+
+
+def store(data: dict):
+    response = requests.post(f"{store_url}/", json=data)
+    response.raise_for_status()
+    cid = response.text
+    return cid
+
+
+def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
+    cid = store(pollen_request.dict()["input"])
+    supabase.table("pollen").upsert(
+        {"input": cid, "image": pollen_request.image}
+    ).execute()
+    try:
+        response = requests.get(f"{store_url}/pollen/{cid}")
+        response.raise_for_status()
+        output = response.json().get("output")
+    except requests.exceptions.HTTPError:
+        output = None
+    return cid, output
+
+
+def run_with_replicate(pollen_request: PollenRequest) -> PollenResponse:
+    model_name = pollen_request.image.split(":")[1]
+    model = replicate.models.get(model_name)
+    output = model.predict(**pollen_request.input)
+    return output
+
+
+def save_to_db(input_cid: str, pollen_response: PollenResponse):
+    output_cid = store(pollen_response.dict()["output"])
+    db_entry = (
+        supabase.table("pollen")
+        .update({"output": output_cid, "end_time": "now()", "success": True})
+        .eq("input", input_cid)
+        .execute()
+    )
+    return db_entry.data[0]
 
 
 @click.command()

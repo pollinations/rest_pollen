@@ -6,17 +6,11 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pypollsdk.model import run_model
-from supabase import Client, create_client
 
 from rest_pollen.authentication import TokenPayload, get_current_user
+from rest_pollen.db_client import supabase
 
 app = FastAPI()
-
-url: str = os.environ.get("SUPABASE_URL")
-supabase_api_key: str = os.environ.get("SUPABASE_API_KEY")
-supabase: Client = None
-if url is not None and supabase_api_key is not None:
-    supabase = create_client(url, supabase_api_key)
 
 
 AVATAR_IMAGE = (
@@ -59,11 +53,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.get("/")
-async def root():
-    return {"healthy": "yes"}
 
 
 @app.post("/avatar")

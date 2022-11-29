@@ -2,7 +2,8 @@ import requests
 from utils import generate_test_token
 
 backend_url = "https://rest.pollinations.ai"
-backend_url = "http://localhost:5000"
+# backend_url = "http://localhost:5000"
+# backend_url = "https://worker-dev.pollinations.ai"
 
 
 def get_stablediffusion_request():
@@ -37,7 +38,7 @@ def wedatanation_client():
     avatar = response.json()
     print(avatar)
     response = requests.post(
-        "http://localhost:6000/wedatanation/avatar/reserve",
+        f"{backend_url}/wedatanation/avatar/reserve",
         json=avatar,
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
@@ -67,9 +68,12 @@ def lemonade_client():
 
 def get_dreamachine_request():
     request = {
-        # "image": "replicate:pollinations/stable-diffusion-dreamachine",
-        "image": "replicate:stability-ai/stable-diffusion",
-        "input": {"prompt": "A pizza eating a banana"},
+        "image": "replicate:pollinations/stable-diffusion-dreamachine",
+        # "image": "replicate:stability-ai/stable-diffusion",
+        "input": {
+            "prompt": "A pizza eating a banana\nA pizze with a fat belly",
+            "num_frames_per_prompt": 20,
+        },
     }
     return request
 

@@ -18,7 +18,7 @@ setup(
         "pytest-cov",
         "supabase",
         "replicate",
-        "websocket-client"
+        "websocket-client",
     ],
     extras_require={
         "test": [

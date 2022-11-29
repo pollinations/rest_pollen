@@ -20,12 +20,13 @@ reuseable_oauth = OAuth2PasswordBearer(tokenUrl="/login", scheme_name="JWT")
 class TokenPayload(BaseModel):
     sub: str
     exp: int
+    token: str
 
 
 async def get_current_user(token: str = Depends(reuseable_oauth)) -> dict:
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
-        token_data = TokenPayload(**payload)
+        token_data = TokenPayload(**payload, token=token)
 
         if dt.datetime.fromtimestamp(token_data.exp) < dt.datetime.now():
             raise HTTPException(

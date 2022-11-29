@@ -39,5 +39,45 @@ def generate_pollinations_frontend_token() -> str:
     return encoded_jwt
 
 
+def get_lemonade_request():
+    request = {
+        "image": "replicate:pollinations/lemonade-preset",
+        "input": {
+            "image": "https://store.pollinations.ai/ipfs/QmejbsQbhi4UsNGEeDSRszpzXv6W6CR61Gk2TZ53vQx5sT?filename=00003.png"
+        },
+    }
+    return request
+
+
+def get_wedatanation_request():
+    request = {
+        "description": "a nice bear with sunglasses",
+        "user_id": "niels",
+        "num_suggestions": 2,
+    }
+    return request
+
+
+def get_stablediffusion_request():
+    request = {
+        "image": "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/stable-diffusion-private",
+        "input": {
+            "prompts": "A knight on a horse made out of stars and a galactic nebula"
+        },
+    }
+    return request
+
+
+def get_dreamachine_request():
+    request = {
+        "image": "replicate:pollinations/stable-diffusion-dreamachine",
+        "input": {
+            "prompts": "A pizza eating a banana\nA pizze with a fat belly",
+            "num_frames_per_prompt": 20,
+        },
+    }
+    return request
+
+
 if __name__ == "__main__":
     print(generate_pollinations_frontend_token())

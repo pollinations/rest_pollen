@@ -2,6 +2,7 @@ import json
 
 import rel
 import websocket
+from utils import generate_test_token
 
 
 def on_message(ws, message):
@@ -32,8 +33,9 @@ def get_dreamachine_request():
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
+    token = generate_test_token()
     ws = websocket.WebSocketApp(
-        "ws://localhost:5000/ws",
+        f"ws://localhost:5000/ws?token={token}",
         # "wss://worker-dev.pollinations.ai/ws",
         on_open=on_open,
         on_message=on_message,

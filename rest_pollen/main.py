@@ -81,7 +81,13 @@ def generate(
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: str = None):
+    try:
+        user = await get_current_user(token)
+        assert user.token is not None
+    except HTTPException:
+        await websocket.close()
+        return
     await websocket.accept()
     # First get the request json
     pollen_request_json = await websocket.receive_json()

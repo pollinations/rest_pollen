@@ -2,7 +2,7 @@ import requests
 from utils import generate_test_token
 
 backend_url = "https://rest.pollinations.ai"
-# backend_url = "http://localhost:5000"
+backend_url = "http://localhost:5000"
 # backend_url = "https://worker-dev.pollinations.ai"
 
 
@@ -71,7 +71,7 @@ def get_dreamachine_request():
         "image": "replicate:pollinations/stable-diffusion-dreamachine",
         # "image": "replicate:stability-ai/stable-diffusion",
         "input": {
-            "prompt": "A pizza eating a banana\nA pizze with a fat belly",
+            "prompts": "A pizza eating a banana\nA pizze with a fat belly",
             "num_frames_per_prompt": 20,
         },
     }

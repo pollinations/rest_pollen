@@ -36,7 +36,7 @@ class PollenRequest(BaseModel):
 class PollenResponse(BaseModel):
     image: str
     input: dict
-    output: Optional[Union[dict, List]]
+    output: Optional[Union[dict, List, str, int, float]]
     status: Optional[str]
 
 

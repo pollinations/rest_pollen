@@ -12,7 +12,6 @@ from pydantic import BaseModel
 from pypollsdk.model import run_model
 from starlette.websockets import WebSocketDisconnect
 
-from rest_pollen.apis.dreamachine import app as dreamachine_app
 from rest_pollen.apis.wedatanation import app as wedatanation_app
 from rest_pollen.authentication import TokenPayload, get_current_user
 from rest_pollen.db_client import supabase
@@ -25,7 +24,6 @@ app = FastAPI()
 
 
 app.mount("/wedatanation", wedatanation_app)
-app.mount("/dreamachine", dreamachine_app)
 
 
 class PollenRequest(BaseModel):

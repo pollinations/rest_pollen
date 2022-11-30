@@ -7,8 +7,8 @@ from utils import (
 )
 
 backend_url = "https://rest.pollinations.ai"
+backend_url = "https://worker-dev.pollinations.ai"
 backend_url = "http://localhost:5000"
-# backend_url = "https://worker-dev.pollinations.ai"
 
 
 def wedatanation_client():

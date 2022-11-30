@@ -80,54 +80,31 @@ def generate(
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = None):
-    # try:
-    #     user = await get_current_user(token)
-    #     assert user.token is not None
-    # except HTTPException:
-    #     await websocket.close()
-    #     return
     await websocket.accept()
     # First get the request json
     pollen_request_json = await websocket.receive_json()
     pollen_request = PollenRequest(**pollen_request_json)
 
-    cid, output = get_from_db(pollen_request)
-    exists_in_db = False
-    if output is not None:
-        exists_in_db = True
-        pollen_response = PollenResponse(
-            image=pollen_request.image,
-            input=pollen_request.input,
-            output=output,
-            status="success",
-        )
-        print("Sending from DB")
-        await websocket.send_json(pollen_response.dict())
-    else:
-        model_image = pollen_request.image.replace("replicate:", "")
-        model = replicate.models.get(model_image).versions.list()[0]
-        prediction = replicate.predictions.create(
-            version=model, input=pollen_request.input
-        )
-        try:
-            while True:
-                prediction.reload()
-                pollen_response = PollenResponse(
-                    image=pollen_request.image,
-                    input=pollen_request.input,
-                    output=prediction.output,
-                    status=prediction.status,
-                )
-                await websocket.send_json(pollen_response.dict())
-                # exit if the prediction is done
-                if prediction.status not in ["starting", "processing"]:
-                    break
-                time.sleep(1)
-        except WebSocketDisconnect:
-            prediction.cancel()
+    model_image = pollen_request.image.replace("replicate:", "")
+    model = replicate.models.get(model_image).versions.list()[0]
+    prediction = replicate.predictions.create(version=model, input=pollen_request.input)
+    try:
+        while True:
+            prediction.reload()
+            pollen_response = PollenResponse(
+                image=pollen_request.image,
+                input=pollen_request.input,
+                output=prediction.output,
+                status=prediction.status,
+            )
+            await websocket.send_json(pollen_response.dict())
+            # exit if the prediction is done
+            if prediction.status not in ["starting", "processing"]:
+                break
+            time.sleep(1)
+    except WebSocketDisconnect:
+        prediction.cancel()
 
-    if not exists_in_db:
-        save_to_db(cid, pollen_response)
     await websocket.close()
 
 
@@ -150,19 +127,11 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
 
 
 def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
-    cid, output = get_from_db(pollen_request)
-    output = None  # TODO: remove hotfix
-    exists_in_db = False
-    if output is not None:
-        exists_in_db = True
-    else:
-        output = run_with_replicate(pollen_request)
     output = run_with_replicate(pollen_request)
+    breakpoint()
     pollen_response = PollenResponse(
         image=pollen_request.image, input=pollen_request.input, output=output
     )
-    if not exists_in_db:
-        save_to_db(cid, pollen_response)
     return pollen_response
 
 

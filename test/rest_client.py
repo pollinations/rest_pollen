@@ -49,6 +49,7 @@ def dreamachine_client():
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
     print(response.text)
+
     print(response)
 
 

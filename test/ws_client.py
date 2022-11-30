@@ -24,9 +24,7 @@ def on_open(ws):
 def get_dreamachine_request():
     request = {
         "image": "replicate:stability-ai/stable-diffusion",
-        "input": {
-            "prompt": "A knight on a horse made out of stars and a galactic nebula"
-        },
+        "input": {"prompt": "A horse made out of gold bla"},
     }
     return json.dumps(request)
 
@@ -35,8 +33,8 @@ if __name__ == "__main__":
     websocket.enableTrace(True)
     token = generate_test_token()
     ws = websocket.WebSocketApp(
-        f"ws://localhost:5000/ws?token={token}",
-        # "wss://worker-dev.pollinations.ai/ws",
+        # f"ws://localhost:5000/ws?token={token}",
+        "wss://worker-dev.pollinations.ai/ws",
         on_open=on_open,
         on_message=on_message,
         on_error=on_error,

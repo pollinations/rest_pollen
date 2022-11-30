@@ -8,7 +8,7 @@ from utils import (
 
 backend_url = "https://rest.pollinations.ai"
 backend_url = "https://worker-dev.pollinations.ai"
-backend_url = "http://localhost:5000"
+# backend_url = "http://localhost:5000"
 
 
 def wedatanation_client():
@@ -54,5 +54,5 @@ def dreamachine_client():
 
 if __name__ == "__main__":
     # wedatanation_client()
-    lemonade_client()
-    # dreamachine_client()
+    # lemonade_client()
+    dreamachine_client()

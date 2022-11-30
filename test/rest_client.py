@@ -49,11 +49,10 @@ def dreamachine_client():
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
     print(response.text)
-
     print(response)
 
 
 if __name__ == "__main__":
     # wedatanation_client()
-    # lemonade_client()
-    dreamachine_client()
+    lemonade_client()
+    # dreamachine_client()

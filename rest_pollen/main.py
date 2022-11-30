@@ -80,12 +80,12 @@ def generate(
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = None):
-    try:
-        user = await get_current_user(token)
-        assert user.token is not None
-    except HTTPException:
-        await websocket.close()
-        return
+    # try:
+    #     user = await get_current_user(token)
+    #     assert user.token is not None
+    # except HTTPException:
+    #     await websocket.close()
+    #     return
     await websocket.accept()
     # First get the request json
     pollen_request_json = await websocket.receive_json()
@@ -151,11 +151,13 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
 
 def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
     cid, output = get_from_db(pollen_request)
+    output = None  # TODO: remove hotfix
     exists_in_db = False
     if output is not None:
         exists_in_db = True
     else:
         output = run_with_replicate(pollen_request)
+    output = run_with_replicate(pollen_request)
     pollen_response = PollenResponse(
         image=pollen_request.image, input=pollen_request.input, output=output
     )

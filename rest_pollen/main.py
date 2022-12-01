@@ -128,7 +128,6 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
 
 def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
     output = run_with_replicate(pollen_request)
-    breakpoint()
     pollen_response = PollenResponse(
         image=pollen_request.image, input=pollen_request.input, output=output
     )

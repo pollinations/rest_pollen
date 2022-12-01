@@ -72,8 +72,8 @@ def get_dreamachine_request():
     request = {
         "image": "replicate:pollinations/stable-diffusion-dreamachine",
         "input": {
-            "prompts": "A pizza eating a banana\nA pizza with a fat belly",
-            "num_frames_per_prompt": 20,
+            "prompts": "a statue of a woman\nA pizza with a fat belly",
+            "num_frames_per_prompt": 4,
         },
     }
     return request

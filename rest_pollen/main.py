@@ -157,7 +157,10 @@ def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
     else:
         output = run_with_replicate(pollen_request)
     pollen_response = PollenResponse(
-        image=pollen_request.image, input=pollen_request.input, output=output
+        image=pollen_request.image,
+        input=pollen_request.input,
+        output=output,
+        status="success",
     )
     if not exists_in_db:
         save_to_db(cid, pollen_response)
@@ -172,7 +175,7 @@ def store(data: dict):
 
 
 def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
-    cid = store(pollen_request.dict()["input"])
+    cid = store(pollen_request.dict())
     db_entry = (
         supabase.table("pollen")
         .upsert({"input": cid, "image": pollen_request.image})
@@ -184,7 +187,7 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
         try:
             response = requests.get(f"{store_url}/pollen/{cid}")
             response.raise_for_status()
-            output = response.json()
+            output = response.json().get("output")
         except requests.exceptions.HTTPError:
             pass
     return cid, output
@@ -198,7 +201,7 @@ def run_with_replicate(pollen_request: PollenRequest) -> PollenResponse:
 
 
 def save_to_db(input_cid: str, pollen_response: PollenResponse):
-    output_cid = store(pollen_response.dict()["output"])
+    output_cid = store(pollen_response.dict())
     db_entry = (
         supabase.table("pollen")
         .update({"output": output_cid, "end_time": "now()", "success": True})

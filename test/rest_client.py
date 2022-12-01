@@ -1,10 +1,10 @@
 import requests
-from utils import (
-    generate_test_token,
-    get_dreamachine_request,
-    get_lemonade_request,
-    get_wedatanation_request,
-)
+from utils import generate_test_token  # noqa F401
+from utils import get_dreamachine_request  # noqa F401
+from utils import get_lemonade_request  # noqa F401
+from utils import get_replicate_stablediffusion_request  # noqa F401
+from utils import get_stablediffusion_request  # noqa F401
+from utils import get_wedatanation_request  # noqa F401
 
 backend_url = "https://rest.pollinations.ai"
 backend_url = "http://localhost:5000"
@@ -30,19 +30,7 @@ def wedatanation_client():
     print(response.json())
 
 
-def lemonade_client():
-    request = get_lemonade_request()
-    response = requests.post(
-        f"{backend_url}/pollen",
-        json=request,
-        headers={"Authorization": f"Bearer {generate_test_token()}"},
-    )
-    print(response.text)
-    print(response)
-
-
-def dreamachine_client():
-    request = get_dreamachine_request()
+def client(request):
     response = requests.post(
         f"{backend_url}/pollen",
         json=request,
@@ -56,4 +44,4 @@ def dreamachine_client():
 if __name__ == "__main__":
     # wedatanation_client()
     # lemonade_client()
-    dreamachine_client()
+    client(get_replicate_stablediffusion_request())

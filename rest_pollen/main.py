@@ -1,41 +1,26 @@
 import time
-from typing import List, Optional, Union
 
 import click
 import replicate
-import requests
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from pypollsdk.model import run_model
 from starlette.websockets import WebSocketDisconnect
 
 from rest_pollen.apis.wedatanation import app as wedatanation_app
 from rest_pollen.authentication import TokenPayload, get_current_user
-from rest_pollen.db_client import supabase
+from rest_pollen.db_client import get_from_db, save_to_db
+from rest_pollen.schema import PollenRequest, PollenResponse
 
 load_dotenv()
-store_url = "https://store.pollinations.ai"
 
 
 app = FastAPI()
 
 
 app.mount("/wedatanation", wedatanation_app)
-
-
-class PollenRequest(BaseModel):
-    image: str
-    input: dict
-
-
-class PollenResponse(BaseModel):
-    image: str
-    input: dict
-    output: Optional[Union[dict, List, str, int, float]]
-    status: Optional[str]
 
 
 origins = [
@@ -167,48 +152,11 @@ def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
     return pollen_response
 
 
-def store(data: dict):
-    response = requests.post(f"{store_url}/", json=data)
-    response.raise_for_status()
-    cid = response.text
-    return cid
-
-
-def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
-    cid = store(pollen_request.dict())
-    db_entry = (
-        supabase.table("pollen")
-        .upsert({"input": cid, "image": pollen_request.image})
-        .execute()
-        .data[0]
-    )
-    output = None
-    if db_entry["success"] is True:
-        try:
-            response = requests.get(f"{store_url}/pollen/{cid}")
-            response.raise_for_status()
-            output = response.json().get("output")
-        except requests.exceptions.HTTPError:
-            pass
-    return cid, output
-
-
 def run_with_replicate(pollen_request: PollenRequest) -> PollenResponse:
     model_name = pollen_request.image.split(":")[1]
     model = replicate.models.get(model_name)
     output = model.predict(**pollen_request.input)
     return output
-
-
-def save_to_db(input_cid: str, pollen_response: PollenResponse):
-    output_cid = store(pollen_response.dict())
-    db_entry = (
-        supabase.table("pollen")
-        .update({"output": output_cid, "end_time": "now()", "success": True})
-        .eq("input", input_cid)
-        .execute()
-    )
-    return db_entry.data[0]
 
 
 @click.command()

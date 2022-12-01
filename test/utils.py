@@ -61,9 +61,15 @@ def get_wedatanation_request():
 def get_stablediffusion_request():
     request = {
         "image": "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/stable-diffusion-private",
-        "input": {
-            "prompts": "A knight on a horse made out of stars and a galactic nebula"
-        },
+        "input": {"prompts": "horse"},
+    }
+    return request
+
+
+def get_replicate_stablediffusion_request():
+    request = {
+        "image": "replicate:stability-ai/stable-diffusion",
+        "input": {"prompts": "horse"},
     }
     return request
 

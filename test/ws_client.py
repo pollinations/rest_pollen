@@ -3,6 +3,7 @@ import json
 import rel
 import websocket
 from utils import generate_test_token
+from utils import get_lemonade_request as request
 
 
 def on_message(ws, message):
@@ -18,23 +19,15 @@ def on_close(ws, close_status_code, close_msg):
 
 
 def on_open(ws):
-    ws.send(get_dreamachine_request())
-
-
-def get_dreamachine_request():
-    request = {
-        "image": "replicate:stability-ai/stable-diffusion",
-        "input": {"prompt": "A horse made out of gold bla"},
-    }
-    return json.dumps(request)
+    ws.send(json.dumps(request()))
 
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
     token = generate_test_token()
     ws = websocket.WebSocketApp(
-        # f"ws://localhost:5000/ws?token={token}",
-        "wss://worker-dev.pollinations.ai/ws",
+        f"ws://localhost:5000/ws?token={token}",
+        # "wss://worker-dev.pollinations.ai/ws",
         on_open=on_open,
         on_message=on_message,
         on_error=on_error,

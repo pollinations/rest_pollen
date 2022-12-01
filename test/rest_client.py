@@ -39,8 +39,8 @@ def client(request):
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
     print(response.text)
-
     print(response)
+    response.raise_for_status()
 
 
 backends = {

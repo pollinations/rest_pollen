@@ -76,7 +76,7 @@ def get_stablediffusion_request(uncached=False):
 def get_replicate_stablediffusion_request(uncached=False):
     request = {
         "image": "replicate:stability-ai/stable-diffusion",
-        "input": {"prompts": "horse"},
+        "input": {"prompt": "horse"},
     }
     if uncached:
         request["input"]["random"] = random.random()

@@ -2,6 +2,7 @@ import click
 import requests
 from utils import generate_test_token  # noqa F401
 from utils import get_dreamachine_request  # noqa F401
+from utils import get_dreamachine_request_pollinations  # noqa F401
 from utils import get_lemonade_request  # noqa F401
 from utils import get_replicate_stablediffusion_request  # noqa F401
 from utils import get_stablediffusion_request  # noqa F401
@@ -56,20 +57,29 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
-    try:
-        ws_client(backend, get_lemonade_request())
-    except WebsockerClosed:
-        pass
     # cached, lemonade
-    client(get_lemonade_request())
-    # cached, replicate backend
+    client(get_lemonade_request(True))
+    input()
+    # # cached, replicate backend
     client(get_dreamachine_request())
+    input()
     # cached, pollinations backend
-    client(get_stablediffusion_request())
+    client(get_dreamachine_request_pollinations())
+    input()
+    # # uncached, replicate backend
+    client(get_dreamachine_request(True))
+    input()
+    # uncached, pollinations backend
+    client(get_stablediffusion_request(True))
+    input()
     # uncached, replicate backend
     client(get_replicate_stablediffusion_request(True))
     # uncached, pollinations backend
     client(get_stablediffusion_request(True))
+    try:
+        ws_client(backend, get_lemonade_request())
+    except WebsockerClosed:
+        pass
 
 
 if __name__ == "__main__":

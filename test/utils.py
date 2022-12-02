@@ -96,5 +96,18 @@ def get_dreamachine_request(uncached=False):
     return request
 
 
+def get_dreamachine_request_pollinations(uncached=False):
+    request = {
+        "image": "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/stable-diffusion-dreamachine",
+        "input": {
+            "prompts": "a statue of a woman\nA pizza with a fat belly",
+            "num_frames_per_prompt": 4,
+        },
+    }
+    if uncached:
+        request["input"]["random"] = random.random()
+    return request
+
+
 if __name__ == "__main__":
     print(generate_pollinations_frontend_token())

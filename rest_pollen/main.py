@@ -27,6 +27,7 @@ origins = [
     "http://localhost:*",
     "http://localhost:3000",
     "https://pollinations.ai",
+    "https://dreamachine-git-nodes-cooles-team.vercel.app/",
     "https://*.pollinations.ai",
     "wss://*",
     "*",

@@ -1,4 +1,5 @@
 import datetime as dt
+import random
 
 from fastapi.testclient import TestClient
 from jose import jwt
@@ -39,42 +40,50 @@ def generate_pollinations_frontend_token() -> str:
     return encoded_jwt
 
 
-def get_lemonade_request():
+def get_lemonade_request(uncached=False):
     request = {
         "image": "replicate:pollinations/lemonade-preset",
         "input": {
             "image": "https://store.pollinations.ai/ipfs/QmejbsQbhi4UsNGEeDSRszpzXv6W6CR61Gk2TZ53vQx5sT?filename=00003.png"
         },
     }
+    if uncached:
+        request["input"]["random"] = random.random()
     return request
 
 
-def get_wedatanation_request():
+def get_wedatanation_request(uncached=False):
     request = {
         "description": "a nice bear with sunglasses",
         "user_id": "niels",
         "num_suggestions": 2,
     }
+    if uncached:
+        request["input"]["random"] = random.random()
     return request
 
 
-def get_stablediffusion_request():
+def get_stablediffusion_request(uncached=False):
     request = {
         "image": "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/stable-diffusion-private",
         "input": {"prompts": "horse"},
     }
+    if uncached:
+        request["input"]["random"] = random.random()
     return request
 
 
-def get_replicate_stablediffusion_request():
+def get_replicate_stablediffusion_request(uncached=False):
     request = {
         "image": "replicate:stability-ai/stable-diffusion",
-        "input": {"prompts": "horse"},
+        "input": {"prompt": "horse"},
     }
+    if uncached:
+        request["input"]["random"] = random.random()
     return request
 
 
-def get_dreamachine_request():
+def get_dreamachine_request(uncached=False):
     request = {
         "image": "replicate:pollinations/stable-diffusion-dreamachine",
         "input": {
@@ -82,6 +91,21 @@ def get_dreamachine_request():
             "num_frames_per_prompt": 4,
         },
     }
+    if uncached:
+        request["input"]["random"] = random.random()
+    return request
+
+
+def get_dreamachine_request_pollinations(uncached=False):
+    request = {
+        "image": "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/stable-diffusion-dreamachine",
+        "input": {
+            "prompts": "a statue of a woman\nA pizza with a fat belly",
+            "num_frames_per_prompt": 4,
+        },
+    }
+    if uncached:
+        request["input"]["random"] = random.random()
     return request
 
 

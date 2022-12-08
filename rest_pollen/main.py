@@ -1,4 +1,8 @@
+import json
 import time
+from typing import List
+from urllib.error import URLError
+from urllib.request import urlopen
 
 import click
 import replicate
@@ -6,6 +10,8 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.staticfiles import StaticFiles
 from pypollsdk.model import run_model
 from starlette.websockets import WebSocketDisconnect
 
@@ -21,6 +27,7 @@ app = FastAPI()
 
 
 app.mount("/wedatanation", wedatanation_app)
+app.mount("/static", StaticFiles(directory="_static"), name="static")
 
 
 origins = [
@@ -50,6 +57,50 @@ def root():
 @app.get("/user")
 def whoami(user: TokenPayload = Depends(get_current_user)):
     return user
+
+
+index_repo = "https://raw.githubusercontent.com/pollinations/model-index/main"
+
+
+@app.get("/models")
+def models() -> List[str]:
+    """Check the models available on the backend by fetching the models from
+    https://raw.githubusercontent.com/pollinations/model-index/main/images.json"""
+    with urlopen(f"{index_repo}/images.json") as response:
+        models = json.loads(response.read())
+    return list(models.keys())
+
+
+@app.get("/models/{author}/{model}")
+def model(author: str, model: str) -> dict:
+    try:
+        with urlopen(f"{index_repo}/{author}/{model}/openapi.json") as response:
+            return json.loads(response.read())
+    except URLError:
+        raise HTTPException(status_code=404, detail="Model not found")
+
+
+@app.get("/docs/{author}/{model}", include_in_schema=False)
+async def custom_swagger_ui_html(author: str, model: str):
+    try:
+        return get_swagger_ui_html(
+            openapi_url=f"{app.root_path}/models/{author}/{model}",
+            title=f"{author}/{model} - Swagger UI",
+            oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+            swagger_js_url="/static/swagger-ui-bundle.js",
+            swagger_css_url="/static/swagger-ui.css",
+        )
+    except URLError:
+        raise HTTPException(status_code=404, detail="Model not found")
+
+
+@app.get("/redoc/{author}/{model}", include_in_schema=False)
+async def redoc_html(author: str, model: str):
+    return get_redoc_html(
+        openapi_url=f"{app.root_path}/models/{author}/{model}",
+        title=f"{author}/{model} -  ReDoc",
+        redoc_js_url="/static/redoc.standalone.js",
+    )
 
 
 @app.post("/pollen")

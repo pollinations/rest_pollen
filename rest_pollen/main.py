@@ -74,8 +74,19 @@ def models() -> List[str]:
 @app.get("/models/{author}/{model}")
 def model(author: str, model: str) -> dict:
     try:
-        with urlopen(f"{index_repo}/{author}/{model}/openapi.json") as response:
-            return json.loads(response.read())
+        with urlopen(f"{index_repo}/{author}/{model}/inspect.json") as response:
+            inspect = json.loads(response.read())
+            try:
+                openapi = json.loads(
+                    inspect[0]["ContainerConfig"]["Labels"][
+                        "org.cogmodel.openapi_schema"
+                    ]
+                )
+            except KeyError:
+                openapi = json.loads(
+                    inspect[0]["Config"]["Labels"]["org.cogmodel.openapi_schema"]
+                )
+            return openapi
     except URLError:
         raise HTTPException(status_code=404, detail="Model not found")
 

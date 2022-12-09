@@ -107,12 +107,10 @@ async def redoc_html(author: str, model: str):
 def generate(
     pollen_request: PollenRequest, user: TokenPayload = Depends(get_current_user)
 ) -> PollenResponse:
-    if is_pollinations_backend(pollen_request):
-        return run_on_pollinations_infrastructure(pollen_request)
-    elif is_replicate_backend(pollen_request):
+    if is_replicate_backend(pollen_request):
         return run_on_replicate(pollen_request)
     else:
-        raise HTTPException(status_code=400, detail="Unknown model backend")
+        return run_on_pollinations_infrastructure(pollen_request)
 
 
 @app.websocket("/ws")
@@ -168,15 +166,17 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
     await websocket.close()
 
 
-def is_pollinations_backend(pollen_request: PollenRequest) -> bool:
-    return "amazonaws" in pollen_request.image
-
-
 def is_replicate_backend(pollen_request: PollenRequest) -> bool:
     return "replicate:" in pollen_request.image
 
 
 def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenResponse:
+    if not pollen_request.image.startswith(
+        "614871946825.dkr.ecr.us-east-1.amazonaws.com/"
+    ):
+        pollen_request.image = (
+            "614871946825.dkr.ecr.us-east-1.amazonaws.com/" + pollen_request.image
+        )
     response = run_model(pollen_request.image, pollen_request.input)
     pollen_response = PollenResponse(
         image=pollen_request.image,

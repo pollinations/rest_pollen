@@ -57,21 +57,16 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
-    # cached, lemonade
+    # uncached, lemonade
     client(get_lemonade_request(True))
-    input()
     # # cached, replicate backend
     client(get_dreamachine_request())
-    input()
     # cached, pollinations backend
     client(get_dreamachine_request_pollinations())
-    input()
     # # uncached, replicate backend
     client(get_dreamachine_request(True))
-    input()
     # uncached, pollinations backend
     client(get_stablediffusion_request(True))
-    input()
     # uncached, replicate backend
     client(get_replicate_stablediffusion_request(True))
     # uncached, pollinations backend

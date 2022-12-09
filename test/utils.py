@@ -87,8 +87,8 @@ def get_dreamachine_request(uncached=False):
     request = {
         "image": "replicate:pollinations/animate",
         "input": {
-            "prompts": "a statue of a woman\nA pizza with a fat belly",
-            "num_frames_per_prompt": 4,
+            "prompt_start": "sideview of a small monkey, white background",
+            "prompt_end": "sideview of a human walking, white background",
         },
     }
     if uncached:
@@ -100,8 +100,8 @@ def get_dreamachine_request_pollinations(uncached=False):
     request = {
         "image": "pollinations/animate",
         "input": {
-            "prompts": "a statue of a woman\nA pizza with a fat belly",
-            "num_frames_per_prompt": 4,
+            "prompt_start": "sideview of a small monkey, white background",
+            "prompt_end": "sideview of a human walking, white background",
         },
     }
     if uncached:

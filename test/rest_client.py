@@ -58,15 +58,15 @@ def main(backend):
     global backend_url
     backend_url = backends[backend]
     # uncached, lemonade
-    client(get_lemonade_request(True))
+    # client(get_lemonade_request(True))
     # # cached, replicate backend
     client(get_dreamachine_request())
     # cached, pollinations backend
     client(get_dreamachine_request_pollinations())
     # # uncached, replicate backend
-    client(get_dreamachine_request(True))
-    # uncached, pollinations backend
-    client(get_stablediffusion_request(True))
+    # client(get_dreamachine_request(True))
+    # # uncached, pollinations backend
+    # client(get_stablediffusion_request(True))
     # uncached, replicate backend
     client(get_replicate_stablediffusion_request(True))
     # uncached, pollinations backend

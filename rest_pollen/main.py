@@ -1,4 +1,5 @@
 import json
+import subprocess
 import time
 from typing import List
 from urllib.error import URLError
@@ -188,11 +189,20 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
         pollen_request.image = (
             "614871946825.dkr.ecr.us-east-1.amazonaws.com/" + pollen_request.image
         )
-    response = run_model(pollen_request.image, pollen_request.input)
+    attempt = 0
+    response = None
+    status = "failed"
+    while attempt < 3:
+        try:
+            response = run_model(pollen_request.image, pollen_request.input)["output"]
+            status = "success"
+        except subprocess.CalledProcessError:
+            attempt += 1
     pollen_response = PollenResponse(
         image=pollen_request.image,
         input=pollen_request.input,
-        output=response["output"],
+        output=response,
+        status=status,
     )
     return pollen_response
 

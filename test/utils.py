@@ -44,7 +44,7 @@ def get_lemonade_request(uncached=False):
     request = {
         "image": "replicate:pollinations/lemonade-preset",
         "input": {
-            "image": "https://store.pollinations.ai/ipfs/QmejbsQbhi4UsNGEeDSRszpzXv6W6CR61Gk2TZ53vQx5sT?filename=00003.png"
+            "image": "https://www.ifolor.de/content/dam/ifolor/inspire-gallery/inspirationen/selbstportraet-selfie/inspire_selbstportraet_selfie_1200px_header.jpg.transform/w1440/q90/image.jpg?inspire_selbstportraet_selfie_1200px_header.jpg"
         },
     }
     if uncached:
@@ -85,10 +85,10 @@ def get_replicate_stablediffusion_request(uncached=False):
 
 def get_dreamachine_request(uncached=False):
     request = {
-        "image": "replicate:pollinations/stable-diffusion-dreamachine",
+        "image": "replicate:pollinations/animate",
         "input": {
-            "prompts": "a statue of a woman\nA pizza with a fat belly",
-            "num_frames_per_prompt": 4,
+            "prompt_start": "sideview of a small monkey, white background",
+            "prompt_end": "sideview of a human walking, white background",
         },
     }
     if uncached:
@@ -98,10 +98,10 @@ def get_dreamachine_request(uncached=False):
 
 def get_dreamachine_request_pollinations(uncached=False):
     request = {
-        "image": "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/stable-diffusion-dreamachine",
+        "image": "pollinations/animate",
         "input": {
-            "prompts": "a statue of a woman\nA pizza with a fat belly",
-            "num_frames_per_prompt": 4,
+            "prompt_start": "sideview of a small monkey, white background",
+            "prompt_end": "sideview of a human walking, white background",
         },
     }
     if uncached:

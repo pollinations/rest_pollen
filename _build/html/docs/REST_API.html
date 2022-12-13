@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Pollinations REST API &#8212; pollinations-api  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Pollinations Websocket API" href="Websocket_API.html" />
+    <link rel="prev" title="Welcome to pollinations-api’s documentation!" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="pollinations-rest-api">
+<h1>Pollinations REST API<a class="headerlink" href="#pollinations-rest-api" title="Permalink to this heading">¶</a></h1>
+<p>The main endpoint to use all models is the <a class="reference external" href="https://rest.pollinations.ai/pollen"><code class="docutils literal notranslate"><span class="pre">/pollen</span></code></a> endpoint.
+It accepts a POST request with a JSON body that contains the model name and its inputs.
+The response is a JSON object with the results.
+The endpoint is described on <a class="reference external" href="https://rest.pollinations.ai/openapi.json"><code class="docutils literal notranslate"><span class="pre">openapi.json</span></code></a> and can be browsed via <a class="reference external" href="https://rest.pollinations.ai/redoc">/redoc</a> or <a class="reference external" href="https://rest.pollinations.ai/docs%60">/docs</a>.</p>
+<p>Input and output format are model specific and described on <a class="reference external" href="https://rest.pollinations.ai/redoc/%3Cmodel-author%3E/%3Cmodel-name%3E/"><code class="docutils literal notranslate"><span class="pre">/redoc/&lt;model-author&gt;/&lt;model-name&gt;/</span></code></a> or <a class="reference external" href="https://rest.pollinations.ai/docs/%3Cmodel-author%3E/%3Cmodel-name%3E/"><code class="docutils literal notranslate"><span class="pre">/docs/&lt;model-author&gt;/</span></code></a>.</p>
+<p>A list of the available models can be found on <a class="reference external" href="https://rest.pollinations.ai/models"><code class="docutils literal notranslate"><span class="pre">/models</span></code></a>.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>import requests
+import json
+import os
+
+backend_url = &quot;https://rest.pollinations.ai&quot;
+
+request = {
+    &quot;image&quot;: &quot;pollinations/stable-diffusion-private&quot;,
+    &quot;input&quot;: {&quot;prompts&quot;: &quot;a horse made out of clouds&quot;},
+}
+
+output = requests.post(
+    f&quot;{backend_url}/pollen&quot;,
+    json=request,
+    headers={&quot;Authorization&quot;: f&quot;Bearer {os.environ[&#39;POLLINATIONS_API_KEY&#39;]}&quot;},
+)
+
+print(output.text)
+</pre></div>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pollinations-api</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Pollinations REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Websocket_API.html">Pollinations Websocket API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Welcome to pollinations-api’s documentation!</a></li>
+      <li>Next: <a href="Websocket_API.html" title="next chapter">Pollinations Websocket API</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Pollinations.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/docs/REST_API.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

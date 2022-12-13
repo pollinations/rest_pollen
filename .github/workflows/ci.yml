@@ -37,9 +37,10 @@ jobs:
           SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ID: ${{ secrets.SUPABASE_ID }}
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
           docker run --rm -d --name server -p 5000:5000 -e JWT_SECRET=test-secret image:test
           sleep 5
           curl --fail localhost:5000
           docker kill server
-          docker run -e JWT_SECRET=test-secret -e SUPABASE_URL=$SUPABASE_URL -e SUPABASE_API_KEY=$SUPABASE_API_KEY image:test pytest --cov .
+          docker run -e JWT_SECRET=test-secret -e SUPABASE_URL=$SUPABASE_URL -e SUPABASE_API_KEY=$SUPABASE_API_KEY -e REPLICATE_API_TOKEN=$REPLICATE_API_TOKEN image:test pytest --cov .

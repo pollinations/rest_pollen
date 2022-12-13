@@ -43,4 +43,4 @@ jobs:
           sleep 5
           curl --fail localhost:5000
           docker kill server
-          docker run -e JWT_SECRET=test-secret -e SUPABASE_URL=$SUPABASE_URL -e SUPABASE_API_KEY=$SUPABASE_API_KEY image:test pytest --cov .
+          docker run -e JWT_SECRET=test-secret -e SUPABASE_URL=$SUPABASE_URL -e SUPABASE_API_KEY=$SUPABASE_API_KEY -e REPLICATE_API_TOKEN=$REPLICATE_API_TOKEN image:test pytest --cov .

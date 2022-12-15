@@ -5,10 +5,9 @@ from uuid import uuid4
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from pypollsdk.model import run_model
 
 from rest_pollen.authentication import TokenPayload, get_current_user
-from rest_pollen.db_client import supabase
+from rest_pollen.db_client import run_model, supabase
 
 app = FastAPI()
 

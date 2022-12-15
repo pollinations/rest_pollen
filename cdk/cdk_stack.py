@@ -46,10 +46,17 @@ class CdkStack(Stack):
             build_args={"platform": "linux/amd64"},
         )
 
+        # Create role with permissions for s3
         role = iam.Role(
             self,
             "FargateContainerRole",
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["s3:*"],
+                resources=["*"],
+            )
         )
 
         certificate = certificatemanager.Certificate.from_certificate_arn(

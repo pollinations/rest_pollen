@@ -52,6 +52,7 @@ def test_replicate_backend():
 
 def test_pollinations_backend():
     request = get_dreamachine_request_pollinations(True)
+    print(request)
     response = client.post(
         "/pollen",
         json=request,

@@ -213,7 +213,7 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
     attempt = 0
     response = None
     status = "failed"
-    while attempt < 3:
+    while attempt < 3 and status == "failed":
         try:
             response = run_model(pollen_request.image, pollen_request.input)["output"]
             status = "success"

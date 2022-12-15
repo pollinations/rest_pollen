@@ -9,16 +9,16 @@ import click
 import replicate
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, WebSocket
+from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
-from pypollsdk.model import run_model
 from starlette.websockets import WebSocketDisconnect
 
 from rest_pollen.apis.wedatanation import app as wedatanation_app
 from rest_pollen.authentication import TokenPayload, get_current_user
-from rest_pollen.db_client import get_from_db, save_to_db
+from rest_pollen.db_client import get_from_db, run_model, save_to_db
+from rest_pollen.s3_wrapper import s3store
 from rest_pollen.schema import PollenRequest, PollenResponse
 
 load_dotenv()
@@ -58,6 +58,27 @@ def root():
 @app.get("/user")
 def whoami(user: TokenPayload = Depends(get_current_user)):
     return user
+
+
+@app.post("/store")
+async def store_object(
+    request: Request, user: TokenPayload = Depends(get_current_user)
+) -> str:
+    data = await request.json()
+    cid = s3store.put(data)
+    return cid
+
+
+@app.get("/store/{cid}")
+def get(cid: str, user: TokenPayload = Depends(get_current_user)):
+    data = s3store.get(cid)
+    return data
+
+
+@app.get("/store/{cid}/{keys:path}")
+def lookup(cid: str, keys: str, user: TokenPayload = Depends(get_current_user)):
+    data = s3store.get(cid, keys)
+    return data
 
 
 index_repo = "https://raw.githubusercontent.com/pollinations/model-index/main"
@@ -196,7 +217,7 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
         try:
             response = run_model(pollen_request.image, pollen_request.input)["output"]
             status = "success"
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, TypeError):
             attempt += 1
     pollen_response = PollenResponse(
         image=pollen_request.image,

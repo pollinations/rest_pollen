@@ -1,6 +1,7 @@
 from test.utils import (
     generate_test_token,
     get_dreamachine_request,
+    get_dreamachine_request_pollinations,
     get_wedatanation_request,
 )
 
@@ -49,6 +50,16 @@ def test_replicate_backend():
     assert response.status_code == 200
 
 
+def test_pollinations_backend():
+    request = get_dreamachine_request_pollinations(True)
+    response = client.post(
+        "/pollen",
+        json=request,
+        headers={"Authorization": f"Bearer {generate_test_token()}"},
+    )
+    assert response.status_code == 200
+
+
 def test_websocket():
     client = TestClient(app)
     token = generate_test_token()
@@ -80,7 +91,37 @@ def test_websocket_authentication_invalid_token():
     assert not connection_accepted
 
 
-if __name__ == "__main__":
-    test_websocket()
-    test_websocket_authentication_no_token()
-    test_websocket_authentication_invalid_token()
+def test_post_retrieve_dict() -> None:
+    token = generate_test_token()
+    data = {"image": "image", "input": {"a": 1}}
+    response = client.post(
+        "/store", json=data, headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    cid = response.json()
+    response = client.get(f"/store/{cid}", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json() == data
+    response = client.get(
+        f"/store/{cid}/input", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert response.json() == data["input"]
+
+
+def test_post_retrieve_list() -> None:
+    token = generate_test_token()
+    data = [0, 1, 2, 3]
+    response = client.post(
+        "/store", json=data, headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    cid = response.json()
+    response = client.get(f"/store/{cid}", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json() == data
+    response = client.get(
+        f"/store/{cid}/0", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert response.json() == data[0]

@@ -1,8 +1,8 @@
+from test.utils import get_wedatanation_request  # noqa F401
 from test.utils import (
     generate_test_token,
     get_dreamachine_request,
     get_dreamachine_request_pollinations,
-    get_wedatanation_request,
 )
 
 from fastapi.testclient import TestClient
@@ -23,21 +23,21 @@ def test_authentication() -> None:
     assert response.status_code == 403
 
 
-def test_wedatanation() -> None:
-    request = get_wedatanation_request()
-    response = client.post(
-        "/wedatanation/avatar",
-        json=request,
-        headers={"Authorization": f"Bearer {generate_test_token()}"},
-    )
-    assert response.status_code == 200
-    avatar = response.json()
-    assert len(avatar["images"]) == request["num_suggestions"]
-    # response = client.post(
-    #     "/wedatanation/avatar/reserve",
-    #     json=avatar,
-    #     headers={"Authorization": f"Bearer {generate_test_token()}"},
-    # )
+# def test_wedatanation() -> None:
+#     request = get_wedatanation_request()
+#     response = client.post(
+#         "/wedatanation/avatar",
+#         json=request,
+#         headers={"Authorization": f"Bearer {generate_test_token()}"},
+#     )
+#     assert response.status_code == 200
+#     avatar = response.json()
+#     assert len(avatar["images"]) == request["num_suggestions"]
+#     # response = client.post(
+#     #     "/wedatanation/avatar/reserve",
+#     #     json=avatar,
+#     #     headers={"Authorization": f"Bearer {generate_test_token()}"},
+#     # )
 
 
 def test_replicate_backend():

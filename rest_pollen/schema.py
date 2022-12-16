@@ -13,3 +13,4 @@ class PollenResponse(BaseModel):
     input: dict
     output: Optional[Union[dict, List, str, int, float]]
     status: Optional[str]
+    cid: Optional[str]

@@ -168,6 +168,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
             input=pollen_request.input,
             output=output,
             status="success",
+            cid=cid,
         )
         print("Sending from DB")
         await websocket.send_json(pollen_response.dict())
@@ -213,9 +214,11 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
     attempt = 0
     response = None
     status = "failed"
+    cid = None
     while attempt < 3 and status == "failed":
         try:
-            response = run_model(pollen_request.image, pollen_request.input)["output"]
+            response, cid = run_model(pollen_request.image, pollen_request.input)
+            response = response["output"]
             status = "success"
         except (subprocess.CalledProcessError, TypeError):
             attempt += 1
@@ -224,6 +227,7 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
         input=pollen_request.input,
         output=response,
         status=status,
+        cid=cid,
     )
     return pollen_response
 
@@ -240,6 +244,7 @@ def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
         input=pollen_request.input,
         output=output,
         status="success",
+        cid=cid,
     )
     if not exists_in_db:
         save_to_db(cid, pollen_response)

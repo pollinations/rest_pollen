@@ -115,7 +115,7 @@ def run_model(image, inputs, priority=1):
             supabase.table(table_name).select("*").eq("input", cid).execute()
         ).data[0]
         time.sleep(1)
+    response = None
     if db_entry["success"] is True:
-        return fetch(db_entry["output"])
-    else:
-        return None
+        response = fetch(db_entry["output"])
+    return response, cid

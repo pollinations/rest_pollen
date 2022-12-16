@@ -123,8 +123,3 @@ class S3Wrapper:
 
 
 s3store = S3Wrapper("pollinations-user-data")
-print(
-    s3store.get("s3:4a41fd6eb47ba78c8242f30a7e0bf6e8e98bed7f51bc24ae0ad23aa1a8bdd6e9")[
-        "output"
-    ]["log"]
-)

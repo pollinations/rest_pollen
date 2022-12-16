@@ -104,6 +104,12 @@ def run_model(image, inputs, priority=1):
         "priority": priority,
     }
     db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
+    if db_entry["success"] is False:
+        # delete this row and reinsert it
+        db_entry = (
+            supabase.table(table_name).delete().eq("input", cid).execute()
+        ).data[0]
+        db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
     while db_entry["success"] is None:
         db_entry = (
             supabase.table(table_name).select("*").eq("input", cid).execute()

@@ -140,6 +140,8 @@ async def redoc_html(author: str, model: str):
 def generate(
     pollen_request: PollenRequest, user: TokenPayload = Depends(get_current_user)
 ) -> PollenResponse:
+    if pollen_request.token is None:
+        pollen_request.token = user.token
     if is_replicate_backend(pollen_request):
         return run_on_replicate(pollen_request)
     else:
@@ -157,7 +159,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
     await websocket.accept()
     # First get the request json
     pollen_request_json = await websocket.receive_json()
-    pollen_request = PollenRequest(**pollen_request_json)
+    pollen_request = PollenRequest(**pollen_request_json, token=user.token)
 
     cid, output = get_from_db(pollen_request)
     exists_in_db = False
@@ -217,7 +219,9 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
     cid = None
     while attempt < 3 and status == "failed":
         try:
-            response, cid = run_model(pollen_request.image, pollen_request.input)
+            response, cid = run_model(
+                pollen_request.image, pollen_request.input, pollen_request.token
+            )
             response = response["output"]
             status = "success"
         except (subprocess.CalledProcessError, TypeError):

@@ -3,7 +3,7 @@ import time
 
 import requests
 from dotenv import load_dotenv
-from supabase import Client, create_client
+from supabase import create_client
 
 from rest_pollen.s3_wrapper import s3store
 from rest_pollen.schema import PollenRequest, PollenResponse
@@ -12,11 +12,19 @@ load_dotenv()
 
 url: str = os.environ.get("SUPABASE_URL")
 supabase_api_key: str = os.environ.get("SUPABASE_API_KEY")
-supabase: Client = None
-if url is not None and supabase_api_key is not None:
-    supabase = create_client(url, supabase_api_key)
+# supabase: Client = None
+# if url is not None and supabase_api_key is not None:
+#     supabase = create_client(url, supabase_api_key)
 table_name: str = os.environ.get("DB_NAME")
 store_url = "https://store.pollinations.ai"
+
+
+def get_authenticated_client(token):
+    """TODO: check if it is one of the previously issued tokens and replace it"""
+    client = create_client(url, supabase_api_key)
+    postgrest_client = client.postgrest
+    postgrest_client.auth(token)
+    return postgrest_client
 
 
 def store(data: dict):
@@ -43,6 +51,7 @@ def fetch(cid: str):
 
 def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     cid = store(pollen_request.dict())
+    supabase = get_authenticated_client(pollen_request.token)
     db_entry = (
         supabase.table(table_name)
         .upsert({"input": cid, "image": pollen_request.image})
@@ -66,6 +75,7 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
 
 def save_to_db(input_cid: str, pollen_response: PollenResponse):
     output_cid = store(pollen_response.dict())
+    supabase = get_authenticated_client(pollen_response.token)
     db_entry = (
         supabase.table(table_name)
         .update({"output": output_cid, "end_time": "now()", "success": True})
@@ -96,7 +106,8 @@ def remove_none(data):
         return data
 
 
-def run_model(image, inputs, priority=1):
+def run_model(image, inputs, token, priority=1):
+    supabase = get_authenticated_client(token)
     cid = store({"input": inputs})
     pollen = {
         "image": image,

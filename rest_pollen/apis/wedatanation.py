@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from rest_pollen.authentication import TokenPayload, get_current_user
-from rest_pollen.db_client import run_model, supabase
+from rest_pollen.db_client import get_authenticated_client, run_model
 
 app = FastAPI()
 
@@ -68,6 +68,7 @@ async def generate(
             "table_name": table_name,
             "ignore_cache": uuid4().hex,  # On a new request, we don't want to return the same avatar
         },
+        token=user.token,
     )
     images = [i for i in response["output"]["images"].split("url:") if i != ""]
     pollen_response = AvatarResponse(
@@ -80,15 +81,18 @@ async def generate(
     return pollen_response
 
 
-def mark_img_used(img_path, user_id):
-    supabase.table(table_name).insert(
+def mark_img_used(img_path, user_id, db_client):
+    db_client.table(table_name).insert(
         {"img_url": img_path, "user_id": user_id}
     ).execute()
 
 
 @app.post("/avatar/reserve")
-async def mark_as_used(avatar: AvatarResponse):
+async def mark_as_used(
+    avatar: AvatarResponse, user: TokenPayload = Depends(get_current_user)
+):
+    db_client = get_authenticated_client(user.token)
     for image in avatar.images:
-        mark_img_used(f"url:{image}", avatar.user_id)
+        mark_img_used(f"url:{image}", avatar.user_id, db_client)
     avatar.reserved = True
     return avatar

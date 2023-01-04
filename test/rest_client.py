@@ -57,21 +57,21 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
-    # # uncached, lemonade
-    # client(get_lemonade_request(True))
-    # # # cached, replicate backend
-    # client(get_dreamachine_request())
-    # # cached, pollinations backend
+    # uncached, lemonade
+    client(get_lemonade_request(True))
+    # cached, replicate backend
+    client(get_dreamachine_request())
+    # cached, pollinations backend
     client(get_dreamachine_request_pollinations())
     client(get_dreamachine_request_pollinations(True))
-    # # # uncached, replicate backend
-    # client(get_dreamachine_request(True))
-    # # # uncached, pollinations backend
-    # client(get_stablediffusion_request(True))
-    # # uncached, replicate backend
-    # client(get_replicate_stablediffusion_request(True))
-    # # uncached, pollinations backend
-    # client(get_stablediffusion_request(True))
+    # uncached, replicate backend
+    client(get_dreamachine_request(True))
+    # uncached, pollinations backend
+    client(get_replicate_stablediffusion_request(True))
+    # uncached, replicate backend
+    client(get_replicate_stablediffusion_request(True))
+    # uncached, pollinations backend
+    client(get_stablediffusion_request(True))
     try:
         ws_client(backend, get_lemonade_request())
     except WebsockerClosed:

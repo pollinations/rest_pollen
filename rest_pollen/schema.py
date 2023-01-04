@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class PollenRequest(BaseModel):
     image: str
     input: dict
+    token: Optional[str]
 
 
 class PollenResponse(BaseModel):

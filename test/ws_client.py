@@ -17,7 +17,7 @@ def ws_client(backend, request):
     backends = {
         "prod": "wss://rest.pollinations.ai",
         "dev": "wss://worker-dev.pollinations.ai",
-        "local": "ws://localhost:5000",
+        "local": "ws://localhost:6000",
     }
     backend_url = backends[backend]
 

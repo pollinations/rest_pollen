@@ -10,10 +10,29 @@ from rest_pollen.main import app
 client = TestClient(app)
 
 
+# def generate_test_token() -> str:
+#     """For debugging only: generate a token for a given username"""
+#     to_encode = {
+#         "sub": "testuser",
+#         "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
+#     }
+#     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
+#     return encoded_jwt
+
+
 def generate_test_token() -> str:
-    """For debugging only: generate a token for a given username"""
+    from rest_pollen.db_client import create_client, supabase_api_key, url
+
+    client = create_client(url, supabase_api_key)
+    random_password: str = "fqj13bnf2hiu23h"
+    email = "niels@pollinations.ai"
+    session = client.auth.sign_in(email=email, password=random_password)
+    return session.access_token
+
+
+def generate_token(username) -> str:
     to_encode = {
-        "sub": "testuser",
+        "sub": username,
         "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
     }
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
@@ -110,4 +129,5 @@ def get_dreamachine_request_pollinations(uncached=False):
 
 
 if __name__ == "__main__":
-    print(generate_pollinations_frontend_token())
+    # print(generate_pollinations_frontend_token())
+    print(generate_token(username="niels"))

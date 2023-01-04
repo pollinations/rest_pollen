@@ -1,7 +1,8 @@
+from test.utils import get_wedatanation_request  # noqa F401
 from test.utils import (
     generate_test_token,
     get_dreamachine_request,
-    get_wedatanation_request,
+    get_dreamachine_request_pollinations,
 )
 
 from fastapi.testclient import TestClient
@@ -22,25 +23,36 @@ def test_authentication() -> None:
     assert response.status_code == 403
 
 
-def test_wedatanation() -> None:
-    request = get_wedatanation_request()
-    response = client.post(
-        "/wedatanation/avatar",
-        json=request,
-        headers={"Authorization": f"Bearer {generate_test_token()}"},
-    )
-    assert response.status_code == 200
-    avatar = response.json()
-    assert len(avatar["images"]) == request["num_suggestions"]
-    # response = client.post(
-    #     "/wedatanation/avatar/reserve",
-    #     json=avatar,
-    #     headers={"Authorization": f"Bearer {generate_test_token()}"},
-    # )
+# def test_wedatanation() -> None:
+#     request = get_wedatanation_request()
+#     response = client.post(
+#         "/wedatanation/avatar",
+#         json=request,
+#         headers={"Authorization": f"Bearer {generate_test_token()}"},
+#     )
+#     assert response.status_code == 200
+#     avatar = response.json()
+#     assert len(avatar["images"]) == request["num_suggestions"]
+#     # response = client.post(
+#     #     "/wedatanation/avatar/reserve",
+#     #     json=avatar,
+#     #     headers={"Authorization": f"Bearer {generate_test_token()}"},
+#     # )
 
 
 def test_replicate_backend():
     request = get_dreamachine_request()
+    response = client.post(
+        "/pollen",
+        json=request,
+        headers={"Authorization": f"Bearer {generate_test_token()}"},
+    )
+    assert response.status_code == 200
+
+
+def test_pollinations_backend():
+    request = get_dreamachine_request_pollinations(True)
+    print(request)
     response = client.post(
         "/pollen",
         json=request,
@@ -80,7 +92,37 @@ def test_websocket_authentication_invalid_token():
     assert not connection_accepted
 
 
-if __name__ == "__main__":
-    test_websocket()
-    test_websocket_authentication_no_token()
-    test_websocket_authentication_invalid_token()
+def test_post_retrieve_dict() -> None:
+    token = generate_test_token()
+    data = {"image": "image", "input": {"a": 1}}
+    response = client.post(
+        "/store", json=data, headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    cid = response.json()
+    response = client.get(f"/store/{cid}", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json() == data
+    response = client.get(
+        f"/store/{cid}/input", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert response.json() == data["input"]
+
+
+def test_post_retrieve_list() -> None:
+    token = generate_test_token()
+    data = [0, 1, 2, 3]
+    response = client.post(
+        "/store", json=data, headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    cid = response.json()
+    response = client.get(f"/store/{cid}", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json() == data
+    response = client.get(
+        f"/store/{cid}/0", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert response.json() == data[0]

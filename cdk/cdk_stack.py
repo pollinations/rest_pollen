@@ -13,7 +13,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/6f66a681-ce7a-4d57-afbc-cfdbca17972e"
+if os.environ.get("DEV_OR_PROD") == "prod":
+    certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/6f66a681-ce7a-4d57-afbc-cfdbca17972e"
+else:
+    certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/af060bf9-a5c1-4084-9990-9ba26da84bc1"
+
 jwt_secret_arn = (
     "arn:aws:secretsmanager:us-east-1:614871946825:secret:supabase-jwt-secret-cnJpRy"
 )
@@ -42,10 +46,17 @@ class CdkStack(Stack):
             build_args={"platform": "linux/amd64"},
         )
 
+        # Create role with permissions for s3
         role = iam.Role(
             self,
             "FargateContainerRole",
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["s3:*"],
+                resources=["*"],
+            )
         )
 
         certificate = certificatemanager.Certificate.from_certificate_arn(
@@ -74,6 +85,9 @@ class CdkStack(Stack):
                     "SUPABASE_URL": os.environ.get("SUPABASE_URL"),
                     "SUPABASE_ID": os.environ.get("SUPABASE_ID"),
                     "REPLICATE_API_TOKEN": os.environ.get("REPLICATE_API_TOKEN"),
+                    "DB_NAME": "pollen"
+                    if os.environ.get("DEV_OR_PROD") == "prod"
+                    else "pollen_dev",
                 },
                 secrets={
                     "JWT_SECRET": ecs.Secret.from_secrets_manager(

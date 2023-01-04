@@ -38,9 +38,14 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ID: ${{ secrets.SUPABASE_ID }}
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ID: ${{ secrets.SUPABASE_ID }}
         run: |
           docker run --rm -d --name server -p 5000:5000 -e JWT_SECRET=test-secret image:test
           sleep 5
           curl --fail localhost:5000
           docker kill server
-          docker run -e JWT_SECRET=test-secret -e SUPABASE_URL=$SUPABASE_URL -e SUPABASE_API_KEY=$SUPABASE_API_KEY -e REPLICATE_API_TOKEN=$REPLICATE_API_TOKEN image:test pytest --cov .
+          docker run -e JWT_SECRET=test-secret -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e SUPABASE_API_KEY=$SUPABASE_API_KEY -e SUPABASE_URL=$SUPABASE_URL -e SUPABASE_ID=$SUPABASE_ID -e DB_NAME=pollen_dev image:test pytest --cov .

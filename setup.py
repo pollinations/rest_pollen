@@ -9,6 +9,7 @@ setup(
     package_data={},
     scripts=[],
     install_requires=[
+        "boto3",
         "click",
         "fastapi",
         "uvicorn",

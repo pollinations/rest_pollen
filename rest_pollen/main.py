@@ -140,6 +140,8 @@ async def redoc_html(author: str, model: str):
 def generate(
     pollen_request: PollenRequest, user: TokenPayload = Depends(get_current_user)
 ) -> PollenResponse:
+    """Generate a pollen on one of the backends.
+    Always check the database first for cached results."""
     if pollen_request.token is None:
         pollen_request.token = user.token
     if is_replicate_backend(pollen_request):
@@ -198,7 +200,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
             prediction.cancel()
 
     if not exists_in_db:
-        save_to_db(cid, pollen_response)
+        save_to_db(cid, pollen_response, token)
     await websocket.close()
 
 
@@ -251,7 +253,7 @@ def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
         cid=cid,
     )
     if not exists_in_db:
-        save_to_db(cid, pollen_response)
+        save_to_db(cid, pollen_response, pollen_request.token)
     return pollen_response
 
 

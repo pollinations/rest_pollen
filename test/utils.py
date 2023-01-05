@@ -119,8 +119,8 @@ def get_dreamachine_request_pollinations(uncached=False):
     request = {
         "image": "pollinations/animate",
         "input": {
-            "prompt_start": "sideview of a small monkey, white background",
-            "prompt_end": "sideview of a human walking, white background",
+            "prompt_start": "sideview of a small monkey, white background, by Vincent van Gogh",
+            "prompt_end": "sideview of a human walking, white background, by Vincent van Gogh",
         },
     }
     if uncached:

@@ -5,6 +5,7 @@ import requests
 from dotenv import load_dotenv
 from supabase import create_client
 
+from rest_pollen.authentication import get_token_payload
 from rest_pollen.s3_wrapper import s3store
 from rest_pollen.schema import PollenRequest, PollenResponse
 
@@ -24,7 +25,8 @@ def get_authenticated_client(token):
     client = create_client(url, supabase_api_key)
     postgrest_client = client.postgrest
     postgrest_client.auth(token)
-    return postgrest_client
+    user = get_token_payload(token)
+    return postgrest_client, user
 
 
 def store(data: dict):
@@ -51,10 +53,10 @@ def fetch(cid: str):
 
 def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     cid = store(pollen_request.dict())
-    supabase = get_authenticated_client(pollen_request.token)
+    supabase, user = get_authenticated_client(pollen_request.token)
     db_entry = (
         supabase.table(table_name)
-        .upsert({"input": cid, "image": pollen_request.image})
+        .upsert({"input": cid, "image": pollen_request.image, "user_id": user.sub})
         .execute()
         .data[0]
     )
@@ -73,9 +75,9 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     return cid, output
 
 
-def save_to_db(input_cid: str, pollen_response: PollenResponse):
+def save_to_db(input_cid: str, pollen_response: PollenResponse, token: str):
     output_cid = store(pollen_response.dict())
-    supabase = get_authenticated_client(pollen_response.token)
+    supabase, user = get_authenticated_client(token)
     db_entry = (
         supabase.table(table_name)
         .update({"output": output_cid, "end_time": "now()", "success": True})
@@ -107,13 +109,9 @@ def remove_none(data):
 
 
 def run_model(image, inputs, token, priority=1):
-    supabase = get_authenticated_client(token)
+    supabase, user = get_authenticated_client(token)
     cid = store({"input": inputs})
-    pollen = {
-        "image": image,
-        "input": cid,
-        "priority": priority,
-    }
+    pollen = {"image": image, "input": cid, "priority": priority, "user_id": user.sub}
     db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
     if db_entry["success"] is False:
         # delete this row and reinsert it

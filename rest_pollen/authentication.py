@@ -25,10 +25,7 @@ class TokenPayload(BaseModel):
 
 async def get_current_user(token: str = Depends(reuseable_oauth)) -> dict:
     try:
-        payload = jwt.decode(
-            token, JWT_SECRET, algorithms=[ALGORITHM], audience="authenticated"
-        )
-        token_data = TokenPayload(**payload, token=token)
+        token_data = get_token_payload(token)
 
         if dt.datetime.fromtimestamp(token_data.exp) < dt.datetime.now():
             raise HTTPException(
@@ -42,4 +39,12 @@ async def get_current_user(token: str = Depends(reuseable_oauth)) -> dict:
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    return token_data
+
+
+def get_token_payload(token: str) -> dict:
+    payload = jwt.decode(
+        token, JWT_SECRET, algorithms=[ALGORITHM], audience="authenticated"
+    )
+    token_data = TokenPayload(**payload, token=token)
     return token_data

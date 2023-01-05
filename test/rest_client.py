@@ -7,7 +7,8 @@ from utils import get_lemonade_request  # noqa F401
 from utils import get_replicate_stablediffusion_request  # noqa F401
 from utils import get_stablediffusion_request  # noqa F401
 from utils import get_wedatanation_request  # noqa F401
-from ws_client import WebsockerClosed, ws_client
+
+# from ws_client import WebsockerClosed, ws_client
 
 
 def wedatanation_client():
@@ -42,6 +43,7 @@ def client(request):
     except Exception:
         print(response.text)
     response.raise_for_status()
+    print("<<<< ", request["image"])
 
 
 backends = {
@@ -57,25 +59,22 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
-    # uncached, lemonade
+    # # lemonade
     client(get_lemonade_request(True))
-    # cached, replicate backend
-    client(get_dreamachine_request())
-    # cached, pollinations backend
-    client(get_dreamachine_request_pollinations())
-    client(get_dreamachine_request_pollinations(True))
-    # uncached, replicate backend
-    client(get_dreamachine_request(True))
-    # uncached, pollinations backend
-    client(get_replicate_stablediffusion_request(True))
-    # uncached, replicate backend
-    client(get_replicate_stablediffusion_request(True))
-    # uncached, pollinations backend
-    client(get_stablediffusion_request(True))
-    try:
-        ws_client(backend, get_lemonade_request())
-    except WebsockerClosed:
-        pass
+    if False:
+        # # dreamachine
+        client(get_dreamachine_request_pollinations())
+        client(get_dreamachine_request_pollinations(True))
+        client(get_dreamachine_request())
+        client(get_dreamachine_request(True))
+
+        # # stable diffusion
+        client(get_replicate_stablediffusion_request(True))
+        client(get_stablediffusion_request(True))
+        # try:
+        #     ws_client(backend, get_lemonade_request())
+        # except WebsockerClosed:
+        #     pass
 
 
 if __name__ == "__main__":

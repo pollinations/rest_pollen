@@ -30,8 +30,16 @@ def wedatanation_client():
     print(response.json())
 
 
+def get_mine():
+    response = requests.get(
+        f"{backend_url}/mine",
+        headers={"Authorization": f"Bearer {generate_test_token()}"},
+    )
+    print(response.json())
+
+
 def client(request):
-    print(">>>>", request["image"])
+    print("<<<<<<<<<", request["image"])
     response = requests.post(
         f"{backend_url}/pollen",
         json=request,
@@ -43,7 +51,8 @@ def client(request):
     except Exception:
         print(response.text)
     response.raise_for_status()
-    print("<<<< ", request["image"])
+    print(request["image"], ">>>>>>>>>")
+    input()
 
 
 backends = {
@@ -59,22 +68,22 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
-    # # lemonade
+    get_mine()
+    # lemonade
     client(get_lemonade_request(True))
-    if False:
-        # # dreamachine
-        client(get_dreamachine_request_pollinations())
-        client(get_dreamachine_request_pollinations(True))
-        client(get_dreamachine_request())
-        client(get_dreamachine_request(True))
+    # dreamachine
+    client(get_dreamachine_request_pollinations())
+    client(get_dreamachine_request_pollinations(True))
+    client(get_dreamachine_request())
+    client(get_dreamachine_request(True))
 
-        # # stable diffusion
-        client(get_replicate_stablediffusion_request(True))
-        client(get_stablediffusion_request(True))
-        # try:
-        #     ws_client(backend, get_lemonade_request())
-        # except WebsockerClosed:
-        #     pass
+    # stable diffusion
+    client(get_replicate_stablediffusion_request(True))
+    client(get_stablediffusion_request(True))
+    # try:
+    #     ws_client(backend, get_lemonade_request())
+    # except WebsockerClosed:
+    #     pass
 
 
 if __name__ == "__main__":

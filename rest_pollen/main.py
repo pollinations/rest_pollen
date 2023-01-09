@@ -17,7 +17,13 @@ from starlette.websockets import WebSocketDisconnect
 
 from rest_pollen.apis.wedatanation import app as wedatanation_app
 from rest_pollen.authentication import TokenPayload, get_current_user
-from rest_pollen.db_client import get_from_db, run_model, save_to_db
+from rest_pollen.db_client import (
+    get_authenticated_client,
+    get_from_db,
+    run_model,
+    save_to_db,
+    table_name,
+)
 from rest_pollen.s3_wrapper import s3store
 from rest_pollen.schema import PollenRequest, PollenResponse
 
@@ -79,6 +85,22 @@ def get(cid: str, user: TokenPayload = Depends(get_current_user)):
 def lookup(cid: str, keys: str, user: TokenPayload = Depends(get_current_user)):
     data = s3store.get(cid, keys)
     return data
+
+
+@app.get("/mine/")
+def mine(
+    user: TokenPayload = Depends(get_current_user),
+) -> List[str]:
+    """Return the list of pollens that the user has run"""
+    db_client, _ = get_authenticated_client(user.token)
+    pollen_ids = (
+        db_client.table(table_name)
+        .select("input")
+        .eq("user_id", user.sub)
+        .execute()
+        .data
+    )
+    return [i["input"] for i in pollen_ids]
 
 
 index_repo = "https://raw.githubusercontent.com/pollinations/model-index/main"

@@ -52,7 +52,9 @@ def fetch(cid: str):
 
 
 def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
-    cid = store(pollen_request.dict())
+    data = pollen_request.dict()
+    del data["token"]
+    cid = store(data)
     supabase, user = get_authenticated_client(pollen_request.token)
     db_entry = (
         supabase.table(table_name)
@@ -64,6 +66,8 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     if db_entry["success"] is True:
         if db_entry["output"].startswith("s3:"):
             output = s3store.get(db_entry["output"])
+            if len(output["output"]) == 0:
+                output = None
         else:
             try:
                 response = requests.get(f"{store_url}/pollen/{cid}")

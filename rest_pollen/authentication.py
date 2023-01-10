@@ -17,6 +17,17 @@ ALGORITHM = "HS256"
 reuseable_oauth = OAuth2PasswordBearer(tokenUrl="/login", scheme_name="JWT")
 
 
+def log_and_run(func):
+    def wrapper(*args, **kwargs):
+        print(f"Running {func.__name__}", args, kwargs)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+# reuseable_oauth = log_and_run(reuseable_oauth)
+
+
 class TokenPayload(BaseModel):
     sub: str
     exp: int

@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from jose import jwt
 
 from rest_pollen.authentication import ALGORITHM, JWT_SECRET
+from rest_pollen.db_client import create_client, supabase_api_key, url
 from rest_pollen.main import app
 
 client = TestClient(app)
@@ -21,8 +22,6 @@ client = TestClient(app)
 
 
 def generate_test_token() -> str:
-    from rest_pollen.db_client import create_client, supabase_api_key, url
-
     client = create_client(url, supabase_api_key)
     random_password: str = "fqj13bnf2hiu23h"
     email = "niels@pollinations.ai"

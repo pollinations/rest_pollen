@@ -72,7 +72,7 @@ class CdkStack(Stack):
             protocol=elb.ApplicationProtocol.HTTPS,
             certificate=certificate,
             redirect_http=True,
-            desired_count=2,
+            desired_count=1,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=image,
                 container_port=5000,

@@ -1,3 +1,4 @@
+import inspect
 import json
 import subprocess
 import time
@@ -67,22 +68,20 @@ def whoami(user: TokenPayload = Depends(get_current_user)):
 
 
 @app.post("/store")
-async def store_object(
-    request: Request, user: TokenPayload = Depends(get_current_user)
-) -> str:
+async def store_object(request: Request) -> str:
     data = await request.json()
     cid = s3store.put(data)
     return cid
 
 
 @app.get("/store/{cid}")
-def get(cid: str, user: TokenPayload = Depends(get_current_user)):
+def get(cid: str):
     data = s3store.get(cid)
     return data
 
 
 @app.get("/store/{cid}/{keys:path}")
-def lookup(cid: str, keys: str, user: TokenPayload = Depends(get_current_user)):
+def lookup(cid: str, keys: str):
     data = s3store.get(cid, keys)
     return data
 
@@ -283,6 +282,8 @@ def run_with_replicate(pollen_request: PollenRequest) -> PollenResponse:
     model_name = pollen_request.image.split(":")[1]
     model = replicate.models.get(model_name)
     output = model.predict(**pollen_request.input)
+    if inspect.isgenerator(output):
+        output = list(output)
     return output
 
 

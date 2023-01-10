@@ -17,16 +17,17 @@ from fastapi.staticfiles import StaticFiles
 from starlette.websockets import WebSocketDisconnect
 
 from rest_pollen.apis.wedatanation import app as wedatanation_app
-from rest_pollen.authentication import TokenPayload, get_current_user
-from rest_pollen.db_client import (
-    get_authenticated_client,
-    get_from_db,
-    run_model,
-    save_to_db,
-    table_name,
+from rest_pollen.authentication import (
+    TokenPayload,
+    create_api_token,
+    get_api_tokens,
+    get_current_user,
+    get_token_payload,
+    revoke_api_token,
 )
+from rest_pollen.db_client import get_from_db, run_model, save_to_db, table_name
 from rest_pollen.s3_wrapper import s3store
-from rest_pollen.schema import PollenRequest, PollenResponse
+from rest_pollen.schema import APIToken, PollenRequest, PollenResponse
 
 load_dotenv()
 
@@ -91,7 +92,7 @@ def mine(
     user: TokenPayload = Depends(get_current_user),
 ) -> List[str]:
     """Return the list of pollens that the user has run"""
-    db_client, _ = get_authenticated_client(user.token)
+    _, db_client = get_token_payload(user.token)
     pollen_ids = (
         db_client.table(table_name)
         .select("input")
@@ -100,6 +101,34 @@ def mine(
         .data
     )
     return [i["input"] for i in pollen_ids]
+
+
+@app.get("/token/")
+def get_my_tokens(
+    user: TokenPayload = Depends(get_current_user),
+) -> List[APIToken]:
+    """Return the list of API tokens for the user"""
+    tokens = get_api_tokens(user.sub)
+    return [APIToken(token=t["token"], created_at=t["created_at"]) for t in tokens]
+
+
+@app.post("/token/")
+def create_my_token(
+    user: TokenPayload = Depends(get_current_user),
+) -> APIToken:
+    """Create a new API token for the user"""
+    token = create_api_token(user.sub)
+    return APIToken(token=token, created_at=time.time())
+
+
+@app.delete("/token/{token}")
+def revoke_my_token(
+    token: str,
+    user: TokenPayload = Depends(get_current_user),
+) -> None:
+    """Revoke an API token for the user"""
+    revoke_api_token(user.sub, token)
+    return
 
 
 index_repo = "https://raw.githubusercontent.com/pollinations/model-index/main"

@@ -6,8 +6,8 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from rest_pollen.authentication import TokenPayload, get_current_user
-from rest_pollen.db_client import get_authenticated_client, run_model
+from rest_pollen.authentication import TokenPayload, get_current_user, get_token_payload
+from rest_pollen.db_client import run_model
 
 app = FastAPI()
 
@@ -91,7 +91,7 @@ def mark_img_used(img_path, user_id, db_client):
 async def mark_as_used(
     avatar: AvatarResponse, user: TokenPayload = Depends(get_current_user)
 ):
-    db_client = get_authenticated_client(user.token)
+    _, db_client = get_token_payload(user.token)
     for image in avatar.images:
         mark_img_used(f"url:{image}", avatar.user_id, db_client)
     avatar.reserved = True

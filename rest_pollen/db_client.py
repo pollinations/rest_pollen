@@ -3,7 +3,6 @@ import time
 
 import requests
 from dotenv import load_dotenv
-from supabase import create_client
 
 from rest_pollen.authentication import get_token_payload
 from rest_pollen.s3_wrapper import s3store
@@ -13,20 +12,8 @@ load_dotenv()
 
 url: str = os.environ.get("SUPABASE_URL")
 supabase_api_key: str = os.environ.get("SUPABASE_API_KEY")
-# supabase: Client = None
-# if url is not None and supabase_api_key is not None:
-#     supabase = create_client(url, supabase_api_key)
 table_name: str = os.environ.get("DB_NAME")
 store_url = "https://store.pollinations.ai"
-
-
-def get_authenticated_client(token):
-    """TODO: check if it is one of the previously issued tokens and replace it"""
-    client = create_client(url, supabase_api_key)
-    postgrest_client = client.postgrest
-    postgrest_client.auth(token)
-    user = get_token_payload(token)
-    return postgrest_client, user
 
 
 def store(data: dict):
@@ -55,7 +42,7 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     data = pollen_request.dict()
     del data["token"]
     cid = store(data)
-    supabase, user = get_authenticated_client(pollen_request.token)
+    supabase, user = get_token_payload(pollen_request.token)
     db_entry = (
         supabase.table(table_name)
         .upsert({"input": cid, "image": pollen_request.image, "user_id": user.sub})
@@ -81,7 +68,7 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
 
 def save_to_db(input_cid: str, pollen_response: PollenResponse, token: str):
     output_cid = store(pollen_response.dict())
-    supabase, user = get_authenticated_client(token)
+    user, supabase = get_token_payload(token)
     db_entry = (
         supabase.table(table_name)
         .update({"output": output_cid, "end_time": "now()", "success": True})
@@ -113,7 +100,7 @@ def remove_none(data):
 
 
 def run_model(image, inputs, token, priority=1):
-    supabase, user = get_authenticated_client(token)
+    user, supabase = get_token_payload(token)
     cid = store({"input": inputs})
     pollen = {"image": image, "input": cid, "priority": priority, "user_id": user.sub}
     db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]

@@ -15,3 +15,8 @@ class PollenResponse(BaseModel):
     output: Optional[Union[dict, List, str, int, float]]
     status: Optional[str]
     cid: Optional[str]
+
+
+class APIToken(BaseModel):
+    token: str
+    created_at: str

@@ -98,7 +98,6 @@ def client(request):
         print(response.text)
     response.raise_for_status()
     print(request["image"], ">>>>>>>>>")
-    input()
 
 
 backends = {
@@ -114,10 +113,10 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
-    token_flow()
-    get_mine()
-    # # lemonade
-    client(get_lemonade_request(True))
+    # token_flow()
+    # get_mine()
+    # # # lemonade
+    # client(get_lemonade_request(True))
     # # dreamachine
     client(get_dreamachine_request_pollinations())
     client(get_dreamachine_request_pollinations(True))

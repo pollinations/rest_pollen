@@ -198,6 +198,7 @@ def generate(
 ) -> PollenResponse:
     """Generate a pollen on one of the backends.
     Always check the database first for cached results."""
+    print(pollen_request)
     if pollen_request.token is None:
         pollen_request.token = user.token
     if is_replicate_backend(pollen_request):
@@ -302,26 +303,23 @@ async def run_ws_on_pollinations_infrastructure(
         logs = None
         if prediction is not None:
             logs = prediction.get("log")
-        try:
-            while status not in ["success", "failed"]:
-                prediction, cid, status, queue_position = create_prediction_or_fetch(
-                    pollen_request.image, pollen_request.input, pollen_request.token
-                )
-                pollen_response = PollenResponse(
-                    image=pollen_request.image,
-                    input=pollen_request.input,
-                    output=prediction,
-                    status=status,
-                    queue_position=queue_position,
-                    logs=logs,
-                )
-                await websocket.send_json(pollen_response.dict())
-                # exit if the prediction is done
-                if status not in ["starting", "processing"]:
-                    break
-                time.sleep(1)
-        except WebSocketDisconnect:
-            prediction.cancel()
+        while status not in ["success", "failed"]:
+            prediction, cid, status, queue_position = create_prediction_or_fetch(
+                pollen_request.image, pollen_request.input, pollen_request.token
+            )
+            pollen_response = PollenResponse(
+                image=pollen_request.image,
+                input=pollen_request.input,
+                output=prediction,
+                status=status,
+                queue_position=queue_position,
+                logs=logs,
+            )
+            await websocket.send_json(pollen_response.dict())
+            # exit if the prediction is done
+            if status in ["success", "failed"]:
+                break
+            time.sleep(1)
 
     if not exists_in_db:
         save_to_db(cid, pollen_response, token)
@@ -351,7 +349,8 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
             response = response["output"]
             status = status
         except (subprocess.CalledProcessError, TypeError):
-            attempt += 1
+            pass
+        attempt += 1
     if response is not None:
         logs = response["log"]
     pollen_response = PollenResponse(

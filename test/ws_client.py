@@ -1,6 +1,5 @@
 import json
 
-import rel
 import websocket
 from utils import (  # noqa
     generate_test_token,
@@ -49,13 +48,12 @@ def ws_client(backend, request):
         on_error=on_error,
         on_close=on_close,
     )
-
-    ws.run_forever(
-        dispatcher=rel, reconnect=5
-    )  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
-    rel.signal(2, rel.abort)  # Keyboard Interrupt
-    rel.dispatch()
+    # run until closed
+    ws.run_forever()
 
 
 if __name__ == "__main__":
-    ws_client("local", get_stablediffusion_request(True))
+    # ws_client("local", get_stablediffusion_request(True))
+    # ws_client("local", get_stablediffusion_request())
+    ws_client("local", get_lemonade_request())
+    # ws_client("local", get_lemonade_request(True))

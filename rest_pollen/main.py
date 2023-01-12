@@ -207,7 +207,7 @@ def generate(
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, token: str = None):
+async def websocket_endpoint_pollinations(websocket: WebSocket, token: str = None):
     try:
         user = await get_current_user(token)
         assert user.token is not None
@@ -218,7 +218,15 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
     # First get the request json
     pollen_request_json = await websocket.receive_json()
     pollen_request = PollenRequest(**pollen_request_json, token=user.token)
+    if is_replicate_backend(pollen_request):
+        await run_ws_on_replicate(pollen_request, token, websocket)
+    else:
+        await run_ws_on_pollinations_infrastructure(pollen_request, token, websocket)
 
+
+async def run_ws_on_replicate(
+    pollen_request: PollenRequest, token: str, websocket: WebSocket
+):
     cid, output = get_from_db(pollen_request)
     exists_in_db = False
     if output is not None:
@@ -261,18 +269,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
     await websocket.close()
 
 
-@app.websocket("/wsp")
-async def websocket_endpoint_pollinations(websocket: WebSocket, token: str = None):
-    try:
-        user = await get_current_user(token)
-        assert user.token is not None
-    except HTTPException:
-        await websocket.close()
-        return
-    await websocket.accept()
-    # First get the request json
-    pollen_request_json = await websocket.receive_json()
-    pollen_request = PollenRequest(**pollen_request_json, token=user.token)
+async def run_ws_on_pollinations_infrastructure(
+    pollen_request: PollenRequest, token, websocket: WebSocket
+):
     if not pollen_request.image.startswith(
         "614871946825.dkr.ecr.us-east-1.amazonaws.com/"
     ):

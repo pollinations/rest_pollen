@@ -7,7 +7,6 @@ from utils import get_lemonade_request  # noqa F401
 from utils import get_replicate_stablediffusion_request  # noqa F401
 from utils import get_stablediffusion_request  # noqa F401
 from utils import get_wedatanation_request  # noqa F401
-from ws_client import WebsockerClosed, ws_client  # noqa F401
 
 
 def token_flow():
@@ -80,7 +79,6 @@ def wedatanation_client():
 
 def get_mine():
     token = generate_test_token()
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNTU1MzhjNy02NzM1LTQyZTUtYjYyMy05MTczZTEzYjA2YTkiLCJleHAiOjE2ODg5MzYzNTAsImF1ZCI6ImFwaSJ9.R_vcDIk-xlYmJdGX9Yz6Sg8xAl3Ym0zI6FrByJvndqg"
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.get(f"{backend_url}/mine/", headers=headers)
     assert response.status_code == 200
@@ -117,22 +115,18 @@ def main(backend):
     global backend_url
     backend_url = backends[backend]
     token_flow()
-    # get_mine()
-    # # # lemonade
-    # client(get_lemonade_request(True))
-    # # # dreamachine
-    # client(get_dreamachine_request_pollinations())
-    # client(get_dreamachine_request_pollinations(True))
-    # client(get_dreamachine_request())
-    # client(get_dreamachine_request(True))
+    get_mine()
+    # # lemonade
+    client(get_lemonade_request(True))
+    # # dreamachine
+    client(get_dreamachine_request_pollinations())
+    client(get_dreamachine_request_pollinations(True))
+    client(get_dreamachine_request())
+    client(get_dreamachine_request(True))
 
-    # # stable diffusion
-    # client(get_replicate_stablediffusion_request(True))
-    # client(get_stablediffusion_request(True))
-    # try:
-    #     ws_client(backend, get_lemonade_request())
-    # except WebsockerClosed:
-    #     pass
+    # stable diffusion
+    client(get_replicate_stablediffusion_request(True))
+    client(get_stablediffusion_request(True))
 
 
 if __name__ == "__main__":

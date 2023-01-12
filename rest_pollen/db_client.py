@@ -42,7 +42,7 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     data = pollen_request.dict()
     del data["token"]
     cid = store(data)
-    supabase, user = get_token_payload(pollen_request.token)
+    user, supabase = get_token_payload(pollen_request.token)
     db_entry = (
         supabase.table(table_name)
         .upsert({"input": cid, "image": pollen_request.image, "user_id": user.sub})
@@ -115,6 +115,25 @@ def run_model(image, inputs, token, priority=1):
             supabase.table(table_name).select("*").eq("input", cid).execute()
         ).data[0]
         time.sleep(1)
+    response = None
+    if db_entry["success"] is True:
+        response = fetch(db_entry["output"])
+    return response, cid
+
+
+def create_prediction_or_fetch(
+    image, inputs, token, priority=1, delete_if_failed=False
+):
+    user, supabase = get_token_payload(token)
+    cid = store({"input": inputs})
+    pollen = {"image": image, "input": cid, "priority": priority, "user_id": user.sub}
+    db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
+    if db_entry["success"] is False:
+        # delete this row and reinsert it
+        db_entry = (
+            supabase.table(table_name).delete().eq("input", cid).execute()
+        ).data[0]
+        db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
     response = None
     if db_entry["success"] is True:
         response = fetch(db_entry["output"])

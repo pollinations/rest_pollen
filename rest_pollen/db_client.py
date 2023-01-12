@@ -116,9 +116,18 @@ def run_model(image, inputs, token, priority=1):
         ).data[0]
         time.sleep(1)
     response = None
-    if db_entry["success"] is True:
+    if db_entry["output"] is not None:
         response = fetch(db_entry["output"])
-    return response, cid
+    status = "starting"
+    if db_entry["success"] is True:
+        status = "success"
+    elif db_entry["success"] is False:
+        status = "failed"
+    return response, cid, status
+
+
+def get_queue_position(cid):
+    return 1
 
 
 def create_prediction_or_fetch(
@@ -128,13 +137,23 @@ def create_prediction_or_fetch(
     cid = store({"input": inputs})
     pollen = {"image": image, "input": cid, "priority": priority, "user_id": user.sub}
     db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
-    if db_entry["success"] is False:
-        # delete this row and reinsert it
+    if db_entry["success"] is False and delete_if_failed:
         db_entry = (
             supabase.table(table_name).delete().eq("input", cid).execute()
         ).data[0]
         db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
     response = None
-    if db_entry["success"] is True:
+    if db_entry["output"] is not None:
         response = fetch(db_entry["output"])
-    return response, cid
+    status = "starting"
+    if db_entry["processing_started"] is True:
+        status = "processing"
+    if db_entry["success"] is True:
+        status = "success"
+    elif db_entry["success"] is False:
+        status = "failed"
+    if db_entry["success"] is None:
+        queue_position = get_queue_position(cid)
+    else:
+        queue_position = None
+    return response, cid, status, queue_position

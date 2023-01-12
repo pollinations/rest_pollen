@@ -25,7 +25,13 @@ from rest_pollen.authentication import (
     get_token_payload,
     revoke_api_token,
 )
-from rest_pollen.db_client import get_from_db, run_model, save_to_db, table_name
+from rest_pollen.db_client import (
+    create_prediction_or_fetch,
+    get_from_db,
+    run_model,
+    save_to_db,
+    table_name,
+)
 from rest_pollen.s3_wrapper import s3store
 from rest_pollen.schema import APIToken, PollenRequest, PollenResponse
 
@@ -240,10 +246,79 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
                     input=pollen_request.input,
                     output=prediction.output,
                     status=prediction.status,
+                    logs=prediction.logs,
                 )
                 await websocket.send_json(pollen_response.dict())
                 # exit if the prediction is done
                 if prediction.status not in ["starting", "processing"]:
+                    break
+                time.sleep(1)
+        except WebSocketDisconnect:
+            prediction.cancel()
+
+    if not exists_in_db:
+        save_to_db(cid, pollen_response, token)
+    await websocket.close()
+
+
+@app.websocket("/wsp")
+async def websocket_endpoint_pollinations(websocket: WebSocket, token: str = None):
+    try:
+        user = await get_current_user(token)
+        assert user.token is not None
+    except HTTPException:
+        await websocket.close()
+        return
+    await websocket.accept()
+    # First get the request json
+    pollen_request_json = await websocket.receive_json()
+    pollen_request = PollenRequest(**pollen_request_json, token=user.token)
+    if not pollen_request.image.startswith(
+        "614871946825.dkr.ecr.us-east-1.amazonaws.com/"
+    ):
+        pollen_request.image = (
+            "614871946825.dkr.ecr.us-east-1.amazonaws.com/" + pollen_request.image
+        )
+
+    cid, output = get_from_db(pollen_request)
+    exists_in_db = False
+    if output is not None:
+        exists_in_db = True
+        pollen_response = PollenResponse(
+            image=pollen_request.image,
+            input=pollen_request.input,
+            output=output,
+            status="success",
+            cid=cid,
+        )
+        print("Sending from DB")
+        await websocket.send_json(pollen_response.dict())
+    else:
+        prediction, cid, status, queue_position = create_prediction_or_fetch(
+            pollen_request.image,
+            pollen_request.input,
+            pollen_request.token,
+            delete_if_failed=True,
+        )
+        logs = None
+        if prediction is not None:
+            logs = prediction.get("log")
+        try:
+            while status not in ["success", "failed"]:
+                prediction, cid, status, queue_position = create_prediction_or_fetch(
+                    pollen_request.image, pollen_request.input, pollen_request.token
+                )
+                pollen_response = PollenResponse(
+                    image=pollen_request.image,
+                    input=pollen_request.input,
+                    output=prediction,
+                    status=status,
+                    queue_position=queue_position,
+                    logs=logs,
+                )
+                await websocket.send_json(pollen_response.dict())
+                # exit if the prediction is done
+                if status not in ["starting", "processing"]:
                     break
                 time.sleep(1)
         except WebSocketDisconnect:
@@ -271,19 +346,22 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
     cid = None
     while attempt < 3 and status == "failed":
         try:
-            response, cid = run_model(
+            response, cid, status = run_model(
                 pollen_request.image, pollen_request.input, pollen_request.token
             )
             response = response["output"]
-            status = "success"
+            status = status
         except (subprocess.CalledProcessError, TypeError):
             attempt += 1
+    if response is not None:
+        logs = response["log"]
     pollen_response = PollenResponse(
         image=pollen_request.image,
         input=pollen_request.input,
         output=response,
         status=status,
         cid=cid,
+        logs=logs,
     )
     return pollen_response
 

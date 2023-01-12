@@ -3,9 +3,10 @@ import random
 
 from fastapi.testclient import TestClient
 from jose import jwt
+from supabase import create_client
 
 from rest_pollen.authentication import ALGORITHM, JWT_SECRET
-from rest_pollen.db_client import create_client, supabase_api_key, url
+from rest_pollen.db_client import supabase_api_key, url
 from rest_pollen.main import app
 
 client = TestClient(app)

@@ -3,8 +3,8 @@ import time
 
 import requests
 from dotenv import load_dotenv
-from supabase import Client, create_client
 
+from rest_pollen.authentication import get_token_payload
 from rest_pollen.s3_wrapper import s3store
 from rest_pollen.schema import PollenRequest, PollenResponse
 
@@ -12,9 +12,6 @@ load_dotenv()
 
 url: str = os.environ.get("SUPABASE_URL")
 supabase_api_key: str = os.environ.get("SUPABASE_API_KEY")
-supabase: Client = None
-if url is not None and supabase_api_key is not None:
-    supabase = create_client(url, supabase_api_key)
 table_name: str = os.environ.get("DB_NAME")
 store_url = "https://store.pollinations.ai"
 
@@ -42,10 +39,13 @@ def fetch(cid: str):
 
 
 def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
-    cid = store(pollen_request.dict())
+    data = pollen_request.dict()
+    del data["token"]
+    cid = store(data)
+    user, supabase = get_token_payload(pollen_request.token)
     db_entry = (
         supabase.table(table_name)
-        .upsert({"input": cid, "image": pollen_request.image})
+        .upsert({"input": cid, "image": pollen_request.image, "user_id": user.sub})
         .execute()
         .data[0]
     )
@@ -53,6 +53,8 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     if db_entry["success"] is True:
         if db_entry["output"].startswith("s3:"):
             output = s3store.get(db_entry["output"])
+            if len(output["output"]) == 0:
+                output = None
         else:
             try:
                 response = requests.get(f"{store_url}/pollen/{cid}")
@@ -64,8 +66,9 @@ def get_from_db(pollen_request: PollenRequest) -> PollenResponse:
     return cid, output
 
 
-def save_to_db(input_cid: str, pollen_response: PollenResponse):
+def save_to_db(input_cid: str, pollen_response: PollenResponse, token: str):
     output_cid = store(pollen_response.dict())
+    user, supabase = get_token_payload(token)
     db_entry = (
         supabase.table(table_name)
         .update({"output": output_cid, "end_time": "now()", "success": True})
@@ -96,19 +99,14 @@ def remove_none(data):
         return data
 
 
-def run_model(image, inputs, priority=1):
+def run_model(image, inputs, token, priority=1):
+    user, supabase = get_token_payload(token)
     cid = store({"input": inputs})
-    pollen = {
-        "image": image,
-        "input": cid,
-        "priority": priority,
-    }
+    pollen = {"image": image, "input": cid, "priority": priority, "user_id": user.sub}
     db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
     if db_entry["success"] is False:
         # delete this row and reinsert it
-        db_entry = (
-            supabase.table(table_name).delete().eq("input", cid).execute()
-        ).data[0]
+        db_entry = supabase.table(table_name).delete().eq("input", cid).execute()
         db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
     while db_entry["success"] is None:
         db_entry = (
@@ -116,6 +114,44 @@ def run_model(image, inputs, priority=1):
         ).data[0]
         time.sleep(1)
     response = None
-    if db_entry["success"] is True:
+    if db_entry["output"] is not None:
         response = fetch(db_entry["output"])
-    return response, cid
+    status = "starting"
+    if db_entry["success"] is True:
+        status = "success"
+    elif db_entry["success"] is False:
+        status = "failed"
+    return response, cid, status
+
+
+def get_queue_position(cid):
+    return 1
+
+
+def create_prediction_or_fetch(
+    image, inputs, token, priority=1, delete_if_failed=False
+):
+    user, supabase = get_token_payload(token)
+    cid = store({"input": inputs})
+    pollen = {"image": image, "input": cid, "priority": priority, "user_id": user.sub}
+    db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
+    if db_entry["success"] is False and delete_if_failed:
+        db_entry = (
+            supabase.table(table_name).delete().eq("input", cid).execute()
+        ).data[0]
+        db_entry = (supabase.table(table_name).upsert(pollen).execute()).data[0]
+    response = None
+    if db_entry["output"] is not None:
+        response = fetch(db_entry["output"])
+    status = "starting"
+    if db_entry["processing_started"] is True:
+        status = "processing"
+    if db_entry["success"] is True:
+        status = "success"
+    elif db_entry["success"] is False:
+        status = "failed"
+    if db_entry["success"] is None:
+        queue_position = get_queue_position(cid)
+    else:
+        queue_position = None
+    return response, cid, status, queue_position

@@ -1,3 +1,4 @@
+import inspect
 import json
 import subprocess
 import time
@@ -16,10 +17,23 @@ from fastapi.staticfiles import StaticFiles
 from starlette.websockets import WebSocketDisconnect
 
 from rest_pollen.apis.wedatanation import app as wedatanation_app
-from rest_pollen.authentication import TokenPayload, get_current_user
-from rest_pollen.db_client import get_from_db, run_model, save_to_db
+from rest_pollen.authentication import (
+    TokenPayload,
+    create_api_token,
+    get_api_tokens,
+    get_current_user,
+    get_token_payload,
+    revoke_api_token,
+)
+from rest_pollen.db_client import (
+    create_prediction_or_fetch,
+    get_from_db,
+    run_model,
+    save_to_db,
+    table_name,
+)
 from rest_pollen.s3_wrapper import s3store
-from rest_pollen.schema import PollenRequest, PollenResponse
+from rest_pollen.schema import APIToken, PollenRequest, PollenResponse
 
 load_dotenv()
 
@@ -61,24 +75,66 @@ def whoami(user: TokenPayload = Depends(get_current_user)):
 
 
 @app.post("/store")
-async def store_object(
-    request: Request, user: TokenPayload = Depends(get_current_user)
-) -> str:
+async def store_object(request: Request) -> str:
     data = await request.json()
     cid = s3store.put(data)
     return cid
 
 
 @app.get("/store/{cid}")
-def get(cid: str, user: TokenPayload = Depends(get_current_user)):
+def get(cid: str):
     data = s3store.get(cid)
     return data
 
 
 @app.get("/store/{cid}/{keys:path}")
-def lookup(cid: str, keys: str, user: TokenPayload = Depends(get_current_user)):
+def lookup(cid: str, keys: str):
     data = s3store.get(cid, keys)
     return data
+
+
+@app.get("/mine/")
+def mine(
+    user: TokenPayload = Depends(get_current_user),
+) -> List[str]:
+    """Return the list of pollens that the user has run"""
+    _, db_client = get_token_payload(user.token)
+    pollen_ids = (
+        db_client.table(table_name)
+        .select("input")
+        .eq("user_id", user.sub)
+        .execute()
+        .data
+    )
+    return [i["input"] for i in pollen_ids]
+
+
+@app.get("/token/")
+def get_my_tokens(
+    user: TokenPayload = Depends(get_current_user),
+) -> List[APIToken]:
+    """Return the list of API tokens for the user"""
+    tokens = get_api_tokens(user.sub)
+    return [APIToken(token=t["token"], created_at=t["created_at"]) for t in tokens]
+
+
+@app.post("/token/")
+def create_my_token(
+    user: TokenPayload = Depends(get_current_user),
+) -> APIToken:
+    """Create a new API token for the user"""
+    token = create_api_token(user.sub)
+    return APIToken(token=token, created_at=time.time())
+
+
+@app.delete("/token/{token}")
+def revoke_my_token(
+    token: str,
+    user: TokenPayload = Depends(get_current_user),
+) -> None:
+    """Revoke an API token for the user"""
+    revoke_api_token(user.sub, token)
+    return
 
 
 index_repo = "https://raw.githubusercontent.com/pollinations/model-index/main"
@@ -140,6 +196,11 @@ async def redoc_html(author: str, model: str):
 def generate(
     pollen_request: PollenRequest, user: TokenPayload = Depends(get_current_user)
 ) -> PollenResponse:
+    """Generate a pollen on one of the backends.
+    Always check the database first for cached results."""
+    print(pollen_request)
+    if pollen_request.token is None:
+        pollen_request.token = user.token
     if is_replicate_backend(pollen_request):
         return run_on_replicate(pollen_request)
     else:
@@ -147,7 +208,7 @@ def generate(
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, token: str = None):
+async def websocket_endpoint_pollinations(websocket: WebSocket, token: str = None):
     try:
         user = await get_current_user(token)
         assert user.token is not None
@@ -157,8 +218,16 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
     await websocket.accept()
     # First get the request json
     pollen_request_json = await websocket.receive_json()
-    pollen_request = PollenRequest(**pollen_request_json)
+    pollen_request = PollenRequest(**pollen_request_json, token=user.token)
+    if is_replicate_backend(pollen_request):
+        await run_ws_on_replicate(pollen_request, token, websocket)
+    else:
+        await run_ws_on_pollinations_infrastructure(pollen_request, token, websocket)
 
+
+async def run_ws_on_replicate(
+    pollen_request: PollenRequest, token: str, websocket: WebSocket
+):
     cid, output = get_from_db(pollen_request)
     exists_in_db = False
     if output is not None:
@@ -186,6 +255,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
                     input=pollen_request.input,
                     output=prediction.output,
                     status=prediction.status,
+                    logs=prediction.logs,
                 )
                 await websocket.send_json(pollen_response.dict())
                 # exit if the prediction is done
@@ -196,7 +266,63 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
             prediction.cancel()
 
     if not exists_in_db:
-        save_to_db(cid, pollen_response)
+        save_to_db(cid, pollen_response, token)
+    await websocket.close()
+
+
+async def run_ws_on_pollinations_infrastructure(
+    pollen_request: PollenRequest, token, websocket: WebSocket
+):
+    if not pollen_request.image.startswith(
+        "614871946825.dkr.ecr.us-east-1.amazonaws.com/"
+    ):
+        pollen_request.image = (
+            "614871946825.dkr.ecr.us-east-1.amazonaws.com/" + pollen_request.image
+        )
+
+    cid, output = get_from_db(pollen_request)
+    exists_in_db = False
+    if output is not None:
+        exists_in_db = True
+        pollen_response = PollenResponse(
+            image=pollen_request.image,
+            input=pollen_request.input,
+            output=output,
+            status="success",
+            cid=cid,
+        )
+        print("Sending from DB")
+        await websocket.send_json(pollen_response.dict())
+    else:
+        prediction, cid, status, queue_position = create_prediction_or_fetch(
+            pollen_request.image,
+            pollen_request.input,
+            pollen_request.token,
+            delete_if_failed=True,
+        )
+        logs = None
+        if prediction is not None:
+            logs = prediction.get("log")
+        while status not in ["success", "failed"]:
+            prediction, cid, status, queue_position = create_prediction_or_fetch(
+                pollen_request.image, pollen_request.input, pollen_request.token
+            )
+            pollen_response = PollenResponse(
+                image=pollen_request.image,
+                input=pollen_request.input,
+                output=prediction,
+                status=status,
+                queue_position=queue_position,
+                logs=logs,
+            )
+            await websocket.send_json(pollen_response.dict())
+            # exit if the prediction is done
+            if status in ["success", "failed"]:
+                break
+            time.sleep(1)
+
+    if not exists_in_db:
+        save_to_db(cid, pollen_response, token)
     await websocket.close()
 
 
@@ -217,17 +343,23 @@ def run_on_pollinations_infrastructure(pollen_request: PollenRequest) -> PollenR
     cid = None
     while attempt < 3 and status == "failed":
         try:
-            response, cid = run_model(pollen_request.image, pollen_request.input)
+            response, cid, status = run_model(
+                pollen_request.image, pollen_request.input, pollen_request.token
+            )
             response = response["output"]
-            status = "success"
+            status = status
         except (subprocess.CalledProcessError, TypeError):
-            attempt += 1
+            pass
+        attempt += 1
+    if response is not None:
+        logs = response["log"]
     pollen_response = PollenResponse(
         image=pollen_request.image,
         input=pollen_request.input,
         output=response,
         status=status,
         cid=cid,
+        logs=logs,
     )
     return pollen_response
 
@@ -247,7 +379,7 @@ def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
         cid=cid,
     )
     if not exists_in_db:
-        save_to_db(cid, pollen_response)
+        save_to_db(cid, pollen_response, pollen_request.token)
     return pollen_response
 
 
@@ -255,6 +387,8 @@ def run_with_replicate(pollen_request: PollenRequest) -> PollenResponse:
     model_name = pollen_request.image.split(":")[1]
     model = replicate.models.get(model_name)
     output = model.predict(**pollen_request.input)
+    if inspect.isgenerator(output):
+        output = list(output)
     return output
 
 

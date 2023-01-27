@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class PollenRequest(BaseModel):
     image: str
     input: dict
+    token: Optional[str]
 
 
 class PollenResponse(BaseModel):
@@ -14,3 +15,10 @@ class PollenResponse(BaseModel):
     output: Optional[Union[dict, List, str, int, float]]
     status: Optional[str]
     cid: Optional[str]
+    queue_position: Optional[int] = None
+    logs: Optional[str] = None
+
+
+class APIToken(BaseModel):
+    token: str
+    created_at: str

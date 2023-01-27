@@ -126,3 +126,18 @@ def test_post_retrieve_list() -> None:
     )
     assert response.status_code == 200
     assert response.json() == data[0]
+
+
+def test_different_users() -> None:
+    token1 = generate_test_token()
+    token2 = generate_test_token()
+    data = get_dreamachine_request_pollinations()
+    response1 = client.post(
+        "/pollen", json=data, headers={"Authorization": f"Bearer {token1}"}
+    )
+    assert response1.status_code == 200
+    response2 = client.post(
+        "/pollen", json=data, headers={"Authorization": f"Bearer {token2}"}
+    )
+    assert response2.status_code == 200
+    assert response1.json()["cid"] == response2.json()["cid"]

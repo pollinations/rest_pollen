@@ -3,17 +3,36 @@ import random
 
 from fastapi.testclient import TestClient
 from jose import jwt
+from supabase import create_client
 
 from rest_pollen.authentication import ALGORITHM, JWT_SECRET
+from rest_pollen.db_client import supabase_api_key, url
 from rest_pollen.main import app
 
 client = TestClient(app)
 
 
+# def generate_test_token() -> str:
+#     """For debugging only: generate a token for a given username"""
+#     to_encode = {
+#         "sub": "testuser",
+#         "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
+#     }
+#     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
+#     return encoded_jwt
+
+
 def generate_test_token() -> str:
-    """For debugging only: generate a token for a given username"""
+    client = create_client(url, supabase_api_key)
+    random_password: str = "fqj13bnf2hiu23h"
+    email = "niels@pollinations.ai"
+    session = client.auth.sign_in(email=email, password=random_password)
+    return session.access_token
+
+
+def generate_token(username) -> str:
     to_encode = {
-        "sub": "testuser",
+        "sub": username,
         "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
     }
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
@@ -100,8 +119,8 @@ def get_dreamachine_request_pollinations(uncached=False):
     request = {
         "image": "pollinations/animate",
         "input": {
-            "prompt_start": "sideview of a small monkey, white background",
-            "prompt_end": "sideview of a human walking, white background",
+            "prompt_start": "sideview of a small monkey, white background, by Vincent van Gogh",
+            "prompt_end": "sideview of a human walking, white background, by Vincent van Gogh",
         },
     }
     if uncached:
@@ -110,4 +129,5 @@ def get_dreamachine_request_pollinations(uncached=False):
 
 
 if __name__ == "__main__":
-    print(generate_pollinations_frontend_token())
+    # print(generate_pollinations_frontend_token())
+    print(generate_token(username="niels"))

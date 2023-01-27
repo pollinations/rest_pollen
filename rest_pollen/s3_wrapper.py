@@ -3,14 +3,22 @@ import hashlib
 import json
 
 import boto3
+import requests
+from fastapi import HTTPException
 
 
 def lookup(data, keys):
     keys = [] if keys is None else keys.split("/")
-    for key in keys:
-        if isinstance(data, list):
-            key = int(key)
-        data = data[key]
+    try:
+        for key in keys:
+            if key == "":
+                continue
+            if isinstance(data, list):
+                key = int(key)
+            data = data[key]
+    except (KeyError, IndexError):
+        # raise 404
+        raise HTTPException(status_code=404, detail="Not found")
     return data
 
 
@@ -25,6 +33,16 @@ def is_base64(data):
         except IndexError:
             return False
     return False
+
+
+store_url = "https://store.pollinations.ai"
+
+
+def legacy_store(cid, route="ipfs"):
+    response = requests.get(f"{store_url}/{route}/{cid}")
+    response.raise_for_status()
+    data = response.json()
+    return data
 
 
 def split_base64(data):
@@ -101,7 +119,7 @@ class S3Wrapper:
             return data
         elif isinstance(data, str) and data.startswith("s3:"):
             object_key = data[3:]
-            expires_in = 3600  # 1 hour
+            expires_in = 3600 * 24 * 7 - 1  # 1 week
             # Generate the presigned URL
             url = self.s3.generate_presigned_url(
                 ClientMethod="get_object",
@@ -116,6 +134,9 @@ class S3Wrapper:
         """Get data from S3. If key is provided, return the value at the key"""
         if object_key.startswith("s3:"):
             object_key = object_key[3:]
+        elif object_key.startswith("Q"):
+            data = legacy_store(object_key)
+            return lookup(data, key)
         response = self.s3.get_object(Bucket=self.bucket_name, Key=object_key)
         data = json.loads(response["Body"].read())
         data = self._replace_s3(data)

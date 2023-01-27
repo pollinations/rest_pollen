@@ -1,14 +1,16 @@
-from test.utils import get_wedatanation_request  # noqa F401
-from test.utils import (
+from test.utils import (  # noqa F401
     generate_test_token,
     get_dreamachine_request,
     get_dreamachine_request_pollinations,
+    get_stablediffusion_request,
+    get_wedatanation_request,
 )
 
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from rest_pollen.main import app
+from rest_pollen.s3_wrapper import legacy_store
 
 client = TestClient(app)
 
@@ -40,6 +42,37 @@ def test_authentication() -> None:
 #     # )
 
 
+def test_store():
+    # test if legacy ipfs works the same as official ipfs store
+    token = generate_test_token()
+    input_cid = "QmPPT9pDcXWrCU8H7DF9gzUFRH8LPkV2nLjfNUbdRLN11H"
+    data_rest_store = client.get(f"/store/{input_cid}").json()
+    assert "input" in data_rest_store
+    data_ipfs_store = legacy_store(input_cid)
+    assert data_rest_store == data_ipfs_store
+    # test if it works the same for the /pollen endpoint
+    data_rest_pollen = client.get(
+        f"/pollen/{input_cid}", headers={"Authorization": f"Bearer {token}"}
+    ).json()
+    assert "output" in data_rest_pollen
+    # data_ipfs_pollen = legacy_store(input_cid, "pollen")
+    # assert data_rest_pollen == data_ipfs_pollen
+
+    # test the new ids
+    input_cid = "s3:b20a66e5f378993d110bcda860376844b1c971d500ddb6e636263a8f7250b535"
+    data_rest_store = client.get(f"/store/{input_cid}").json()
+    assert "input" in data_rest_store
+    data_rest_pollen = client.get(
+        f"/pollen/{input_cid}", headers={"Authorization": f"Bearer {token}"}
+    ).json()
+    assert "output" in data_rest_pollen
+    print(data_rest_pollen)
+
+
+if __name__ == "__main__":
+    test_store()
+
+
 def test_replicate_backend():
     request = get_dreamachine_request()
     response = client.post(
@@ -51,7 +84,7 @@ def test_replicate_backend():
 
 
 def test_pollinations_backend():
-    request = get_dreamachine_request_pollinations(True)
+    request = get_stablediffusion_request(True)
     print(request)
     response = client.post(
         "/pollen",

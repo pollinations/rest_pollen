@@ -93,6 +93,20 @@ def lookup(cid: str, keys: str):
     return data
 
 
+@app.get("/pollen/{cid}")
+def get_pollen(cid: str, user: TokenPayload = Depends(get_current_user)):
+    """Return the pollen response for the given cid"""
+    _, db_client = get_token_payload(user.token)
+    output_cid = (
+        db_client.table(table_name)
+        .select("output")
+        .eq("input", cid)
+        .execute()
+        .data[0]["output"]
+    )
+    return s3store.get(output_cid)
+
+
 @app.get("/mine/")
 def mine(
     user: TokenPayload = Depends(get_current_user),
@@ -394,7 +408,7 @@ def run_with_replicate(pollen_request: PollenRequest) -> PollenResponse:
 
 @click.command()
 @click.option("--host", default="0.0.0.0", help="Host to listen on")
-@click.option("--port", default=5000, help="Port to listen on")
+@click.option("--port", default=7000, help="Port to listen on")
 def main(host: str, port: int) -> None:
     """
     Run the server.

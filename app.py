@@ -9,8 +9,10 @@ dev_or_prod = os.environ.get("DEV_OR_PROD", "dev")
 
 if dev_or_prod == "dev":
     stack_name = "pollen-rest-api-dev"
-else:
+elif dev_or_prod == "prod":
     stack_name = "pollen-rest-api"
+elif dev_or_prod == "prod2":
+    stack_name = "pollen-rest-api-prod"
 
 app = cdk.App()
 CdkStack(

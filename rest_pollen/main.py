@@ -223,6 +223,9 @@ def generate(
 
 @app.websocket("/ws")
 async def websocket_endpoint_pollinations(websocket: WebSocket, token: str = None):
+    # Legacy support of no token requests from lemonade
+    if token is None:
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNTU1MzhjNy02NzM1LTQyZTUtYjYyMy05MTczZTEzYjA2YTkiLCJleHAiOjE2ODg5OTYxNTAsImF1ZCI6ImFwaSJ9.bNNrBGuXqdvkLnMKDAc7XUmEusIfwxYKKAiE9JpEplE"
     try:
         user = await get_current_user(token)
         assert user.token is not None

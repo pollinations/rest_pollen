@@ -20,7 +20,7 @@ def ws_client(backend, request):
     backends = {
         "prod": "wss://rest.pollinations.ai",
         "dev": "wss://worker-dev.pollinations.ai",
-        "local": "ws://localhost:6000",
+        "local": "ws://localhost:7000",
     }
     backend_url = backends[backend]
 
@@ -40,9 +40,10 @@ def ws_client(backend, request):
         ws.send(json.dumps(request))
 
     websocket.enableTrace(True)
-    token = generate_test_token()
+    token = generate_test_token()  # noqa
     ws = websocket.WebSocketApp(
-        f"{backend_url}/ws?token={token}",
+        # f"{backend_url}/ws?token={token}",
+        f"{backend_url}/ws",
         on_open=on_open,
         on_message=on_message,
         on_error=on_error,

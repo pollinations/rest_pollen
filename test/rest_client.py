@@ -60,6 +60,7 @@ def token_flow():
 
 def wedatanation_client():
     request = get_wedatanation_request()
+    breakpoint()
     response = requests.post(
         f"{backend_url}/wedatanation/avatar",
         json=request,
@@ -113,19 +114,20 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
+    wedatanation_client()
     # token_flow()
     # get_mine()
     # # # lemonade
     # client(get_lemonade_request(True))
     # # dreamachine
-    client(get_dreamachine_request_pollinations())
-    client(get_dreamachine_request_pollinations(True))
-    client(get_dreamachine_request())
-    client(get_dreamachine_request(True))
+    # client(get_dreamachine_request_pollinations())
+    # client(get_dreamachine_request_pollinations(True))
+    # client(get_dreamachine_request())
+    # client(get_dreamachine_request(True))
 
-    # stable diffusion
-    client(get_replicate_stablediffusion_request(True))
-    client(get_stablediffusion_request(True))
+    # # stable diffusion
+    # client(get_replicate_stablediffusion_request(True))
+    # client(get_stablediffusion_request(True))
 
 
 if __name__ == "__main__":

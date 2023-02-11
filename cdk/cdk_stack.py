@@ -24,9 +24,9 @@ if os.environ.get("DEV_OR_PROD") == "prod":
     time.sleep(10)
 elif os.environ.get("DEV_OR_PROD") == "prod2":
     # new prod
-    certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/af060bf9-a5c1-4084-9990-9ba26da84bc1"
+    certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/61d6bfb2-3c72-4ce8-9dd5-eba8c1445268"
     is_prod = True
-    stage = "prod"
+    stage = "-v2"
     print("Sure you want to deploy to prod? If not, cancel now!")
     import time
 
@@ -35,7 +35,7 @@ else:
     # dev
     certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/af060bf9-a5c1-4084-9990-9ba26da84bc1"
     is_prod = False
-    stage = "dev"
+    stage = "-dev"
 
 jwt_secret_arn = (
     "arn:aws:secretsmanager:us-east-1:614871946825:secret:supabase-jwt-secret-cnJpRy"
@@ -51,11 +51,18 @@ class CdkStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Create VPC and Subnets for the ECS Cluster
-        vpc = ec2.Vpc(
-            self,
-            "VPC",
-            max_azs=2,
-        )
+        if os.environ.get("DEV_OR_PROD") == "prod2":
+            vpc = ec2.Vpc.from_lookup(
+                self,
+                "VPC",
+                vpc_id="vpc-07117655709132a25",
+            )
+        else:
+            vpc = ec2.Vpc(
+                self,
+                "VPC",
+                max_azs=2,
+            )
 
         # Create middleware ecs cluster
         image = ecs.ContainerImage.from_asset(
@@ -83,7 +90,7 @@ class CdkStack(Stack):
         # Create ECS pattern for the ECS Cluster
         cluster = ecs_patterns.ApplicationLoadBalancedFargateService(  # noqa
             self,
-            f"pollen-rest-api-{stage}",
+            f"pollen-rest-api{stage}",
             vpc=vpc,
             public_load_balancer=True,
             protocol=elb.ApplicationProtocol.HTTPS,

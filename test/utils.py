@@ -30,13 +30,17 @@ def generate_test_token() -> str:
     return session.access_token
 
 
-def generate_token(username) -> str:
-    to_encode = {
-        "sub": username,
-        "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
-    }
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
-    return encoded_jwt
+# def generate_token(username) -> str:
+#     to_encode = {
+#         "sub": username,
+#         "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
+#     }
+#     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
+#     return encoded_jwt
+
+
+# def generate_test_token() -> str:
+#     return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ3ZWRhdGFuYXRpb24tZGV2IiwiZXhwIjoxNjg0Njc3MjcwfQ.7X4GYtoUZQjVATnqfLQltD8TjLn1Ny1KAFxdBnEP8Sk"
 
 
 def generate_wedatanation_token() -> str:
@@ -126,8 +130,3 @@ def get_dreamachine_request_pollinations(uncached=False):
     if uncached:
         request["input"]["random"] = random.random()
     return request
-
-
-if __name__ == "__main__":
-    # print(generate_pollinations_frontend_token())
-    print(generate_token(username="niels"))

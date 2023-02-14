@@ -8,7 +8,8 @@ s3 = boto3.client("s3")
 
 
 bucket_name = "pollinations-ci-bucket"
-prefix = "avatars4/"  # Optional prefix to limit results to a specific folder
+# prefix = "avatars4/"  # Optional prefix to limit results to a specific folder
+prefix = "meme-avatars/"
 avatar_table = "wedatanation-avatar"
 
 

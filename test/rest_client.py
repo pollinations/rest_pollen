@@ -60,21 +60,21 @@ def token_flow():
 
 def wedatanation_client():
     request = get_wedatanation_request()
-    breakpoint()
     response = requests.post(
         f"{backend_url}/wedatanation/avatar",
         json=request,
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
+    print(generate_test_token())
     print(response.text)
     print(response)
     avatar = response.json()
     print(avatar)
-    response = requests.post(
-        f"{backend_url}/wedatanation/avatar/reserve",
-        json=avatar,
-        headers={"Authorization": f"Bearer {generate_test_token()}"},
-    )
+    # response = requests.post(
+    #     f"{backend_url}/wedatanation/avatar/reserve",
+    #     json=avatar,
+    #     headers={"Authorization": f"Bearer {generate_test_token()}"},
+    # )
     print(response.json())
 
 
@@ -104,7 +104,7 @@ def client(request):
 backends = {
     "prod": "https://rest.pollinations.ai",
     "dev": "https://worker-dev.pollinations.ai",
-    "local": "http://localhost:6000",
+    "local": "http://localhost:7000",
 }
 backend_url = None
 

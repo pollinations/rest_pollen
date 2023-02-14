@@ -83,3 +83,9 @@ async def mark_as_used(
         mark_img_used(f"url:{image}", avatar.user_id, db_client)
     avatar.reserved = True
     return avatar
+
+
+@app.get("/available")
+async def get_available():
+    """Show how many images are available for each category"""
+    pass

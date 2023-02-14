@@ -267,10 +267,13 @@ async def run_ws_on_replicate(
         try:
             while True:
                 prediction.reload()
+                output = prediction.output
+                if isinstance(output, list):
+                    output = output[-1]
                 pollen_response = PollenResponse(
                     image=pollen_request.image,
                     input=pollen_request.input,
-                    output=prediction.output,
+                    output=output,
                     status=prediction.status,
                     logs=prediction.logs,
                 )

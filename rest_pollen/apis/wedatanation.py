@@ -1,11 +1,16 @@
 import os
+from collections import defaultdict
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from rest_pollen.apis.avatar_search import find_avatar
+from rest_pollen.apis.avatar_search import (
+    find_avatar,
+    get_all_image_urls,
+    get_attributes,
+)
 from rest_pollen.authentication import (
     TokenPayload,
     get_current_user,
@@ -85,7 +90,28 @@ async def mark_as_used(
     return avatar
 
 
+def extract_image_id_from_url(url):
+    return url.split("/")[-1].split("(")[0].split(".")[0]
+
+
 @app.get("/available")
-async def get_available():
+async def get_available() -> dict:
     """Show how many images are available for each category"""
-    pass
+    # fetch all image ids
+    img_urls = get_all_image_urls()
+    img_ids = [extract_image_id_from_url(url) for url in img_urls]
+    # fetch all reserved image urls
+    reserved_img_urls = supabase.table(table_name).select("*").execute().data
+    reserved_img_ids = [
+        extract_image_id_from_url(url["img_url"]) for url in reserved_img_urls
+    ]
+    # get the difference
+    available_img_ids = set(img_ids) - set(reserved_img_ids)
+    # group by animal category using defaultdict with default 0
+    available_counts = defaultdict(lambda: 0)
+    for img_id in available_img_ids:
+        animal, item, attribute = get_attributes(img_id)
+        available_counts[animal] += 1
+    available_counts["total"] = sum(available_counts.values())
+    # return the count for each category
+    return available_counts

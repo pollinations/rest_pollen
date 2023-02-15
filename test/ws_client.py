@@ -18,7 +18,8 @@ class WebsockerClosed(Exception):
 
 def ws_client(backend, request):
     backends = {
-        "prod": "wss://rest.pollinations.ai",
+        "legacy": "wss://rest.pollinations.ai",
+        "prod": "wss://worker-prod.pollinations.ai",
         "dev": "wss://worker-dev.pollinations.ai",
         "local": "ws://localhost:7000",
     }

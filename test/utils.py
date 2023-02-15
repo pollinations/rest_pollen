@@ -1,4 +1,5 @@
 import datetime as dt
+import os
 import random
 
 from fastapi.testclient import TestClient
@@ -24,9 +25,13 @@ client = TestClient(app)
 
 def generate_test_token() -> str:
     client = create_client(url, supabase_api_key)
-    random_password: str = "fqj13bnf2hiu23h"
-    email = "niels@pollinations.ai"
-    session = client.auth.sign_in(email=email, password=random_password)
+    random_password: str = os.environ.get("wdn_test_password")
+    email = "henry@wedatanation.io"
+    try:
+        session = client.auth.sign_in(email=email, password=random_password)
+    except:  # noqa
+        client.auth.sign_up(email=email, password=random_password)
+        session = client.auth.sign_in(email=email, password=random_password)
     return session.access_token
 
 
@@ -41,16 +46,6 @@ def generate_test_token() -> str:
 
 # def generate_test_token() -> str:
 #     return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ3ZWRhdGFuYXRpb24tZGV2IiwiZXhwIjoxNjg0Njc3MjcwfQ.7X4GYtoUZQjVATnqfLQltD8TjLn1Ny1KAFxdBnEP8Sk"
-
-
-def generate_wedatanation_token() -> str:
-    """For debugging only: generate a token for a given username"""
-    to_encode = {
-        "sub": "wedatanation-dev",
-        "exp": dt.datetime.utcnow() + dt.timedelta(days=180),
-    }
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
-    return encoded_jwt
 
 
 def generate_pollinations_frontend_token() -> str:

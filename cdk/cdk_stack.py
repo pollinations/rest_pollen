@@ -24,7 +24,7 @@ if os.environ.get("DEV_OR_PROD") == "prod":
     time.sleep(10)
 elif os.environ.get("DEV_OR_PROD") == "prod2":
     # new prod
-    certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/6e17b694-fa3a-4d52-96e0-4c4cb6d40300"
+    certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/226b3e6a-612f-449a-ae71-5d45648246f1"
     is_prod = True
     stage = "-v2"
     print("Sure you want to deploy to prod? If not, cancel now!")

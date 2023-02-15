@@ -34,6 +34,7 @@ def token_flow():
     print(response.json())
     # assert the new token is in the list
     assert api_token in [i["token"] for i in response.json()]
+
     # Do something with the token
     request = get_stablediffusion_request(True)
     response = requests.post(
@@ -102,7 +103,8 @@ def client(request):
 
 
 backends = {
-    "prod": "https://rest.pollinations.ai",
+    "legacy": "https://rest.pollinations.ai",
+    "prod": "https://worker-prod.pollinations.ai",
     "dev": "https://worker-dev.pollinations.ai",
     "local": "http://localhost:7000",
 }
@@ -115,19 +117,19 @@ def main(backend):
     global backend_url
     backend_url = backends[backend]
     wedatanation_client()
-    # token_flow()
-    # get_mine()
-    # # # lemonade
-    # client(get_lemonade_request(True))
-    # # dreamachine
-    # client(get_dreamachine_request_pollinations())
-    # client(get_dreamachine_request_pollinations(True))
-    # client(get_dreamachine_request())
-    # client(get_dreamachine_request(True))
+    token_flow()
+    get_mine()
+    # # lemonade
+    client(get_lemonade_request(True))
+    # dreamachine
+    client(get_dreamachine_request_pollinations())
+    client(get_dreamachine_request_pollinations(True))
+    client(get_dreamachine_request())
+    client(get_dreamachine_request(True))
 
-    # # stable diffusion
-    # client(get_replicate_stablediffusion_request(True))
-    # client(get_stablediffusion_request(True))
+    # stable diffusion
+    client(get_replicate_stablediffusion_request(True))
+    client(get_stablediffusion_request(True))
 
 
 if __name__ == "__main__":

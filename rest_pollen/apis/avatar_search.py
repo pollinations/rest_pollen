@@ -57,6 +57,7 @@ items = [
     "book",
     "suit and tie",
     "sun glasses",
+    "sunglasses",
 ]
 
 
@@ -105,7 +106,7 @@ def _find_avatar(animal, item, attribute, num_suggestions):
         selection = [i for i in available if attribute in i]
         if len(selection) >= num_suggestions:
             available = selection
-    avatars = random.choices(available, k=num_suggestions)
+    avatars = random.sample(available, num_suggestions)
     avatar_urls = [
         f"https://{bucket_name}.s3.amazonaws.com/{avatar}" for avatar in avatars
     ]
@@ -113,6 +114,7 @@ def _find_avatar(animal, item, attribute, num_suggestions):
 
 
 def get_attributes(description):
+    description = description.lower()
     animal = [i for i in animals if i in description]
     item = [i for i in items if i in description]
     attribute = [i for i in attributes if i in description]
@@ -128,6 +130,8 @@ def get_attributes(description):
         attribute = None
     else:
         attribute = attribute[0]
+    if item == "sunglasses":
+        item = "sun glasses"
     return animal, item, attribute
 
 

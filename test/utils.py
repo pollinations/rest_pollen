@@ -77,7 +77,7 @@ def get_lemonade_request(uncached=False):
 
 def get_wedatanation_request(uncached=False):
     request = {
-        "description": "a nice bear with sunglasses",
+        "description": "a hippie Sloth with sunglasses",
         "user_id": "niels",
         "num_suggestions": 2,
     }

@@ -58,4 +58,4 @@ if __name__ == "__main__":
     # ws_client("local", get_stablediffusion_request(True))
     # ws_client("local", get_stablediffusion_request())
     # ws_client("local", get_lemonade_request())
-    ws_client("prod", get_lemonade_request(True))
+    ws_client("local", get_lemonade_request(True))

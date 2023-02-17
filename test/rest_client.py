@@ -9,6 +9,14 @@ from utils import get_stablediffusion_request  # noqa F401
 from utils import get_wedatanation_request  # noqa F401
 
 
+def show_tokens():
+    token = generate_test_token()
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(f"{backend_url}/token/", headers=headers)
+    original_tokens = response.json()
+    print(original_tokens)
+
+
 def token_flow():
     """Test token flow.
     1. Create a new token

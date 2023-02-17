@@ -13,39 +13,22 @@ from rest_pollen.main import app
 client = TestClient(app)
 
 
-# def generate_test_token() -> str:
-#     """For debugging only: generate a token for a given username"""
-#     to_encode = {
-#         "sub": "testuser",
-#         "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
-#     }
-#     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
-#     return encoded_jwt
+def invite_user(email, password) -> str:
+    client = create_client(url, supabase_api_key)
+    try:
+        session = client.auth.sign_in(email=email, password=password)
+    except:  # noqa
+        client.auth.sign_up(email=email, password=password)
+        session = client.auth.sign_in(email=email, password=password)
+    return session.access_token
 
 
 def generate_test_token() -> str:
     client = create_client(url, supabase_api_key)
-    random_password: str = os.environ.get("wdn_test_password")
-    email = "henry@wedatanation.io"
-    try:
-        session = client.auth.sign_in(email=email, password=random_password)
-    except:  # noqa
-        client.auth.sign_up(email=email, password=random_password)
-        session = client.auth.sign_in(email=email, password=random_password)
+    random_password: str = os.environ.get("TEST_USER_PASSWORD", "test")
+    email = "niels@pollinations.ai"
+    session = client.auth.sign_in(email=email, password=random_password)
     return session.access_token
-
-
-# def generate_token(username) -> str:
-#     to_encode = {
-#         "sub": username,
-#         "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
-#     }
-#     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
-#     return encoded_jwt
-
-
-# def generate_test_token() -> str:
-#     return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ3ZWRhdGFuYXRpb24tZGV2IiwiZXhwIjoxNjg0Njc3MjcwfQ.7X4GYtoUZQjVATnqfLQltD8TjLn1Ny1KAFxdBnEP8Sk"
 
 
 def generate_pollinations_frontend_token() -> str:

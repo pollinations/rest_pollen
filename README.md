@@ -41,18 +41,3 @@ pytest test --cov
 ### API docs
 Start a server, then open the [openapi docs](http://localhost:5000/openapi.json). Can be viewed in [swagger editor](https://editor.swagger.io/).
 
-
-todo
-[] POST /pollen
-    [x] accept arbitrary json
-    [x] use pypollsdk to send request
-    [x] return response
-[] authentication
-    [x] validate token
-    [] make runModel accept a --token flag
-[.] deployment
-    [] deploy container
-    [] 
-[] make wedatanation endpoints work
-    [] create clip index
-    [] wedatanation-picker: download from index

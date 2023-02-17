@@ -23,12 +23,16 @@ def invite_user(email, password) -> str:
     return session.access_token
 
 
+# def generate_test_token() -> str:
+#     client = create_client(url, supabase_api_key)
+#     random_password: str = os.environ.get("TEST_USER_PASSWORD", "test")
+#     email = "niels@pollinations.ai"
+#     session = client.auth.sign_in(email=email, password=random_password)
+#     return session.access_token
+
+
 def generate_test_token() -> str:
-    client = create_client(url, supabase_api_key)
-    random_password: str = os.environ.get("TEST_USER_PASSWORD", "test")
-    email = "niels@pollinations.ai"
-    session = client.auth.sign_in(email=email, password=random_password)
-    return session.access_token
+    return os.environ.get("POLLINATIONS_API_TOKEN")
 
 
 def generate_pollinations_frontend_token() -> str:

@@ -43,8 +43,8 @@ def ws_client(backend, request):
     websocket.enableTrace(True)
     token = generate_test_token()  # noqa
     ws = websocket.WebSocketApp(
-        # f"{backend_url}/ws?token={token}",
-        f"{backend_url}/ws",
+        f"{backend_url}/ws?token={token}",
+        # f"{backend_url}/ws",
         on_open=on_open,
         on_message=on_message,
         on_error=on_error,

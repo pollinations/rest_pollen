@@ -18,9 +18,10 @@ class WebsockerClosed(Exception):
 
 def ws_client(backend, request):
     backends = {
-        "prod": "wss://rest.pollinations.ai",
+        "legacy": "wss://rest.pollinations.ai",
+        "prod": "wss://worker-prod.pollinations.ai",
         "dev": "wss://worker-dev.pollinations.ai",
-        "local": "ws://localhost:6000",
+        "local": "ws://localhost:7000",
     }
     backend_url = backends[backend]
 
@@ -40,9 +41,10 @@ def ws_client(backend, request):
         ws.send(json.dumps(request))
 
     websocket.enableTrace(True)
-    token = generate_test_token()
+    token = generate_test_token()  # noqa
     ws = websocket.WebSocketApp(
-        f"{backend_url}/wsp?token={token}",
+        # f"{backend_url}/ws?token={token}",
+        f"{backend_url}/ws",
         on_open=on_open,
         on_message=on_message,
         on_error=on_error,
@@ -55,5 +57,5 @@ def ws_client(backend, request):
 if __name__ == "__main__":
     # ws_client("local", get_stablediffusion_request(True))
     # ws_client("local", get_stablediffusion_request())
-    ws_client("local", get_lemonade_request())
-    # ws_client("local", get_lemonade_request(True))
+    # ws_client("local", get_lemonade_request())
+    ws_client("local", get_lemonade_request(True))

@@ -14,18 +14,35 @@ from dotenv import load_dotenv
 load_dotenv()
 
 if os.environ.get("DEV_OR_PROD") == "prod":
+    # legacy prod
     certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/6f66a681-ce7a-4d57-afbc-cfdbca17972e"
+    is_prod = True
+    stage = ""
+    print("Sure you want to deploy to legacy? If not, cancel now!")
+    import time
+
+    time.sleep(10)
+elif os.environ.get("DEV_OR_PROD") == "prod2":
+    # new prod
+    certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/226b3e6a-612f-449a-ae71-5d45648246f1"
+    is_prod = True
+    stage = "-v2"
+    print("Sure you want to deploy to prod? If not, cancel now!")
+    import time
+
+    time.sleep(10)
 else:
+    # dev
     certificate_arn = "arn:aws:acm:us-east-1:614871946825:certificate/af060bf9-a5c1-4084-9990-9ba26da84bc1"
+    is_prod = False
+    stage = "-dev"
 
 jwt_secret_arn = (
     "arn:aws:secretsmanager:us-east-1:614871946825:secret:supabase-jwt-secret-cnJpRy"
 )
 
 wedatanation_avatar_table = (
-    "wedatanation-avatar"
-    if os.environ.get("DEV_OR_PROD") == "prod"
-    else "wedatanation-avatar-dev"
+    "wedatanation-avatar" if is_prod else "wedatanation-avatar-dev"
 )
 
 
@@ -34,11 +51,18 @@ class CdkStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Create VPC and Subnets for the ECS Cluster
-        vpc = ec2.Vpc(
-            self,
-            "VPC",
-            max_azs=2,
-        )
+        if os.environ.get("DEV_OR_PROD") == "prod2":
+            vpc = ec2.Vpc.from_lookup(
+                self,
+                "VPC",
+                vpc_id="vpc-07117655709132a25",
+            )
+        else:
+            vpc = ec2.Vpc(
+                self,
+                "VPC",
+                max_azs=2,
+            )
 
         # Create middleware ecs cluster
         image = ecs.ContainerImage.from_asset(
@@ -66,7 +90,7 @@ class CdkStack(Stack):
         # Create ECS pattern for the ECS Cluster
         cluster = ecs_patterns.ApplicationLoadBalancedFargateService(  # noqa
             self,
-            "pollen-rest-api",
+            f"pollen-rest-api{stage}",
             vpc=vpc,
             public_load_balancer=True,
             protocol=elb.ApplicationProtocol.HTTPS,
@@ -85,9 +109,7 @@ class CdkStack(Stack):
                     "SUPABASE_URL": os.environ.get("SUPABASE_URL"),
                     "SUPABASE_ID": os.environ.get("SUPABASE_ID"),
                     "REPLICATE_API_TOKEN": os.environ.get("REPLICATE_API_TOKEN"),
-                    "DB_NAME": "pollen"
-                    if os.environ.get("DEV_OR_PROD") == "prod"
-                    else "pollen_dev",
+                    "DB_NAME": "pollen" if is_prod else "pollen_dev",
                 },
                 secrets={
                     "JWT_SECRET": ecs.Secret.from_secrets_manager(

@@ -1,21 +1,25 @@
 import os
+from collections import defaultdict
 from typing import List, Optional
-from uuid import uuid4
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from rest_pollen.authentication import TokenPayload, get_current_user, get_token_payload
-from rest_pollen.db_client import run_model
+from rest_pollen.apis.avatar_search import (
+    find_avatar,
+    get_all_image_urls,
+    get_attributes,
+)
+from rest_pollen.authentication import (
+    TokenPayload,
+    get_current_user,
+    get_token_payload,
+    supabase,
+)
 
 app = FastAPI()
 
-
-AVATAR_IMAGE = (
-    "614871946825.dkr.ecr.us-east-1.amazonaws.com/pollinations/wedatanation-pick-avatar"
-)
-INDEX_ZIP = "url:https://pollinations-ci-bucket.s3.amazonaws.com/clip-index.zip"
 
 table_name = os.environ.get("wedatanation_avatar_table", "wedatanation-avatar-dev")
 
@@ -58,19 +62,7 @@ app.add_middleware(
 async def generate(
     avatar_request: AvatarRequest, user: TokenPayload = Depends(get_current_user)
 ) -> AvatarResponse:
-    response = run_model(
-        AVATAR_IMAGE,
-        {
-            "index_zip": INDEX_ZIP,
-            "prompt": avatar_request.description,
-            "user_id": avatar_request.user_id,
-            "num_results": avatar_request.num_suggestions,
-            "table_name": table_name,
-            "ignore_cache": uuid4().hex,  # On a new request, we don't want to return the same avatar
-        },
-        token=user.token,
-    )
-    images = [i for i in response["output"]["images"].split("url:") if i != ""]
+    images = find_avatar(avatar_request.description, avatar_request.num_suggestions)
     pollen_response = AvatarResponse(
         description=avatar_request.description,
         num_suggestions=avatar_request.num_suggestions,
@@ -82,7 +74,7 @@ async def generate(
 
 
 def mark_img_used(img_path, user_id, db_client):
-    db_client.table(table_name).insert(
+    supabase.table(table_name).insert(
         {"img_url": img_path, "user_id": user_id}
     ).execute()
 
@@ -96,3 +88,30 @@ async def mark_as_used(
         mark_img_used(f"url:{image}", avatar.user_id, db_client)
     avatar.reserved = True
     return avatar
+
+
+def extract_image_id_from_url(url):
+    return url.split("/")[-1].split("(")[0].split(".")[0]
+
+
+@app.get("/available")
+async def get_available() -> dict:
+    """Show how many images are available for each category"""
+    # fetch all image ids
+    img_urls = get_all_image_urls()
+    img_ids = [extract_image_id_from_url(url) for url in img_urls]
+    # fetch all reserved image urls
+    reserved_img_urls = supabase.table(table_name).select("*").execute().data
+    reserved_img_ids = [
+        extract_image_id_from_url(url["img_url"]) for url in reserved_img_urls
+    ]
+    # get the difference
+    available_img_ids = set(img_ids) - set(reserved_img_ids)
+    # group by animal category using defaultdict with default 0
+    available_counts = defaultdict(lambda: 0)
+    for img_id in available_img_ids:
+        animal, item, attribute = get_attributes(img_id)
+        available_counts[animal] += 1
+    available_counts["total"] = sum(available_counts.values())
+    # return the count for each category
+    return available_counts

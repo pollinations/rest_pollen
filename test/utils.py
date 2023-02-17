@@ -1,4 +1,5 @@
 import datetime as dt
+import os
 import random
 
 from fastapi.testclient import TestClient
@@ -12,41 +13,22 @@ from rest_pollen.main import app
 client = TestClient(app)
 
 
-# def generate_test_token() -> str:
-#     """For debugging only: generate a token for a given username"""
-#     to_encode = {
-#         "sub": "testuser",
-#         "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
-#     }
-#     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
-#     return encoded_jwt
+def invite_user(email, password) -> str:
+    client = create_client(url, supabase_api_key)
+    try:
+        session = client.auth.sign_in(email=email, password=password)
+    except:  # noqa
+        client.auth.sign_up(email=email, password=password)
+        session = client.auth.sign_in(email=email, password=password)
+    return session.access_token
 
 
 def generate_test_token() -> str:
     client = create_client(url, supabase_api_key)
-    random_password: str = "fqj13bnf2hiu23h"
+    random_password: str = os.environ.get("TEST_USER_PASSWORD", "test")
     email = "niels@pollinations.ai"
     session = client.auth.sign_in(email=email, password=random_password)
     return session.access_token
-
-
-def generate_token(username) -> str:
-    to_encode = {
-        "sub": username,
-        "exp": dt.datetime.utcnow() + dt.timedelta(minutes=30),
-    }
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-def generate_wedatanation_token() -> str:
-    """For debugging only: generate a token for a given username"""
-    to_encode = {
-        "sub": "wedatanation-dev",
-        "exp": dt.datetime.utcnow() + dt.timedelta(days=180),
-    }
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
-    return encoded_jwt
 
 
 def generate_pollinations_frontend_token() -> str:
@@ -73,7 +55,7 @@ def get_lemonade_request(uncached=False):
 
 def get_wedatanation_request(uncached=False):
     request = {
-        "description": "a nice bear with sunglasses",
+        "description": "a hippie Sloth with sunglasses",
         "user_id": "niels",
         "num_suggestions": 2,
     }
@@ -126,8 +108,3 @@ def get_dreamachine_request_pollinations(uncached=False):
     if uncached:
         request["input"]["random"] = random.random()
     return request
-
-
-if __name__ == "__main__":
-    # print(generate_pollinations_frontend_token())
-    print(generate_token(username="niels"))

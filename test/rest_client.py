@@ -9,6 +9,14 @@ from utils import get_stablediffusion_request  # noqa F401
 from utils import get_wedatanation_request  # noqa F401
 
 
+def show_tokens():
+    token = generate_test_token()
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(f"{backend_url}/token/", headers=headers)
+    original_tokens = response.json()
+    print(original_tokens)
+
+
 def token_flow():
     """Test token flow.
     1. Create a new token
@@ -34,6 +42,7 @@ def token_flow():
     print(response.json())
     # assert the new token is in the list
     assert api_token in [i["token"] for i in response.json()]
+
     # Do something with the token
     request = get_stablediffusion_request(True)
     response = requests.post(
@@ -65,15 +74,16 @@ def wedatanation_client():
         json=request,
         headers={"Authorization": f"Bearer {generate_test_token()}"},
     )
+    print(generate_test_token())
     print(response.text)
     print(response)
     avatar = response.json()
     print(avatar)
-    response = requests.post(
-        f"{backend_url}/wedatanation/avatar/reserve",
-        json=avatar,
-        headers={"Authorization": f"Bearer {generate_test_token()}"},
-    )
+    # response = requests.post(
+    #     f"{backend_url}/wedatanation/avatar/reserve",
+    #     json=avatar,
+    #     headers={"Authorization": f"Bearer {generate_test_token()}"},
+    # )
     print(response.json())
 
 
@@ -101,9 +111,10 @@ def client(request):
 
 
 backends = {
-    "prod": "https://rest.pollinations.ai",
+    "legacy": "https://rest.pollinations.ai",
+    "prod": "https://worker-prod.pollinations.ai",
     "dev": "https://worker-dev.pollinations.ai",
-    "local": "http://localhost:6000",
+    "local": "http://localhost:7000",
 }
 backend_url = None
 
@@ -113,11 +124,12 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
-    # token_flow()
-    # get_mine()
-    # # # lemonade
-    # client(get_lemonade_request(True))
-    # # dreamachine
+    wedatanation_client()
+    token_flow()
+    get_mine()
+    # # lemonade
+    client(get_lemonade_request(True))
+    # dreamachine
     client(get_dreamachine_request_pollinations())
     client(get_dreamachine_request_pollinations(True))
     client(get_dreamachine_request())

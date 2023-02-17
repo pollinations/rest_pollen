@@ -93,6 +93,20 @@ def lookup(cid: str, keys: str):
     return data
 
 
+@app.get("/pollen/{cid}")
+def get_pollen(cid: str, user: TokenPayload = Depends(get_current_user)):
+    """Return the pollen response for the given cid"""
+    _, db_client = get_token_payload(user.token)
+    output_cid = (
+        db_client.table(table_name)
+        .select("output")
+        .eq("input", cid)
+        .execute()
+        .data[0]["output"]
+    )
+    return s3store.get(output_cid)
+
+
 @app.get("/mine/")
 def mine(
     user: TokenPayload = Depends(get_current_user),
@@ -209,6 +223,7 @@ def generate(
 
 @app.websocket("/ws")
 async def websocket_endpoint_pollinations(websocket: WebSocket, token: str = None):
+    # Legacy support of no token requests from lemonade
     try:
         user = await get_current_user(token)
         assert user.token is not None
@@ -250,10 +265,13 @@ async def run_ws_on_replicate(
         try:
             while True:
                 prediction.reload()
+                output = prediction.output
+                if isinstance(output, list):
+                    output = output[-1]
                 pollen_response = PollenResponse(
                     image=pollen_request.image,
                     input=pollen_request.input,
-                    output=prediction.output,
+                    output=output,
                     status=prediction.status,
                     logs=prediction.logs,
                 )
@@ -394,7 +412,7 @@ def run_with_replicate(pollen_request: PollenRequest) -> PollenResponse:
 
 @click.command()
 @click.option("--host", default="0.0.0.0", help="Host to listen on")
-@click.option("--port", default=5000, help="Port to listen on")
+@click.option("--port", default=7000, help="Port to listen on")
 def main(host: str, port: int) -> None:
     """
     Run the server.

@@ -47,7 +47,7 @@ def generate_pollinations_frontend_token() -> str:
 
 def get_lemonade_request(uncached=False):
     request = {
-        "image": "replicate:pollinations/lemonade-preset",
+        "image": "replicate:pollinations/lemonade-preset-2",
         "input": {
             "image": "https://www.ifolor.de/content/dam/ifolor/inspire-gallery/inspirationen/selbstportraet-selfie/inspire_selbstportraet_selfie_1200px_header.jpg.transform/w1440/q90/image.jpg?inspire_selbstportraet_selfie_1200px_header.jpg"
         },

@@ -118,7 +118,7 @@ def run_model(image, inputs, token, priority=1):
         response = fetch(db_entry["output"])
     status = "starting"
     if db_entry["success"] is True:
-        status = "success"
+        status = "succeeded"
     elif db_entry["success"] is False:
         status = "failed"
     return response, cid, status
@@ -147,7 +147,7 @@ def create_prediction_or_fetch(
     if db_entry["processing_started"] is True:
         status = "processing"
     if db_entry["success"] is True:
-        status = "success"
+        status = "succeeded"
     elif db_entry["success"] is False:
         status = "failed"
     if db_entry["success"] is None:

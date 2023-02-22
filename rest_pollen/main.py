@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import json
 import subprocess
@@ -14,7 +15,6 @@ from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
-from starlette.websockets import WebSocketDisconnect
 
 from rest_pollen.apis.wedatanation import app as wedatanation_app
 from rest_pollen.authentication import (
@@ -250,8 +250,9 @@ async def run_ws_on_replicate(
         pollen_response = PollenResponse(
             image=pollen_request.image,
             input=pollen_request.input,
-            output=output,
-            status="success",
+            output=output["output"],
+            status=output["status"],
+            logs=output["logs"],
             cid=cid,
         )
         print("Sending from DB")
@@ -263,9 +264,15 @@ async def run_ws_on_replicate(
             version=model, input=pollen_request.input
         )
         try:
+            previous_output = None
             while True:
                 prediction.reload()
                 output = prediction.output
+                if output == previous_output:
+                    await asyncio.sleep(1)
+                    print("Waiting for output", prediction.status)
+                    continue
+                previous_output = output
                 if isinstance(output, list) and len(output) > 0:
                     output = output[-1]
                 elif isinstance(output, list) and len(output) == 0:
@@ -281,8 +288,8 @@ async def run_ws_on_replicate(
                 # exit if the prediction is done
                 if prediction.status not in ["starting", "processing"]:
                     break
-                time.sleep(1)
-        except WebSocketDisconnect:
+        except Exception as e:  # noqa: E722
+            print(e)
             prediction.cancel()
 
     if not exists_in_db:
@@ -307,8 +314,9 @@ async def run_ws_on_pollinations_infrastructure(
         pollen_response = PollenResponse(
             image=pollen_request.image,
             input=pollen_request.input,
-            output=output,
-            status="success",
+            output=output["output"],
+            status=output["status"],
+            logs=output["logs"],
             cid=cid,
         )
         print("Sending from DB")
@@ -323,7 +331,7 @@ async def run_ws_on_pollinations_infrastructure(
         logs = None
         if prediction is not None:
             logs = prediction.get("log")
-        while status not in ["success", "failed"]:
+        while status not in ["succeeded", "failed", "success"]:
             prediction, cid, status, queue_position = create_prediction_or_fetch(
                 pollen_request.image, pollen_request.input, pollen_request.token
             )
@@ -331,15 +339,15 @@ async def run_ws_on_pollinations_infrastructure(
                 image=pollen_request.image,
                 input=pollen_request.input,
                 output=prediction,
-                status=status,
+                status=status if status != "success" else "succeeded",
                 queue_position=queue_position,
                 logs=logs,
             )
             await websocket.send_json(pollen_response.dict())
             # exit if the prediction is done
-            if status in ["success", "failed"]:
+            if status in ["succeeded", "failed"]:
                 break
-            time.sleep(1)
+            await asyncio.sleep(1)
 
     if not exists_in_db:
         save_to_db(cid, pollen_response, token)
@@ -395,7 +403,7 @@ def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
         image=pollen_request.image,
         input=pollen_request.input,
         output=output,
-        status="success",
+        status="succeeded",
         cid=cid,
     )
     if not exists_in_db:

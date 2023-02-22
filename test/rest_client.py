@@ -126,6 +126,8 @@ def main(backend):
     global backend_url
     backend_url = backends[backend]
     # OK:
+    token_flow()
+
     wedatanation_client()
     get_mine()
     client(get_lemonade_request(True))
@@ -134,7 +136,7 @@ def main(backend):
     client(get_dreamachine_request(True))
 
     # Not OK:
-    token_flow()
+    # token_flow()
 
     # After pollinator upgrade:
     # client(get_stablediffusion_request(True))

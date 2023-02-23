@@ -40,7 +40,6 @@ def token_flow():
     headers_api = {"Authorization": f"Bearer {api_token}"}
     response = requests.get(f"{backend_url}/token/", headers=headers_api)
     print(response.json())
-    breakpoint()
     # assert the new token is in the list
     assert api_token in [i["token"] for i in response.json()]
 
@@ -107,6 +106,7 @@ def client(request):
         print(response.json())
     except Exception:
         print(response.text)
+    breakpoint()
     response.raise_for_status()
     print(request["image"], ">>>>>>>>>")
 
@@ -125,16 +125,17 @@ backend_url = None
 def main(backend):
     global backend_url
     backend_url = backends[backend]
-    # OK:
+    # Not OK:
+    # token_flow()
     wedatanation_client()
-    get_mine()
     client(get_lemonade_request(True))
     client(get_replicate_stablediffusion_request(True))
-    client(get_dreamachine_request())
     client(get_dreamachine_request(True))
 
-    # Not OK:
-    token_flow()
+    # OK:
+    get_mine()
+    client(get_lemonade_request(False))
+    client(get_dreamachine_request())
 
     # After pollinator upgrade:
     # client(get_stablediffusion_request(True))

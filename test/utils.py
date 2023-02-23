@@ -26,8 +26,14 @@ def invite_user(email, password) -> str:
 # def generate_test_token() -> str:
 #     client = create_client(url, supabase_api_key)
 #     random_password: str = os.environ.get("TEST_USER_PASSWORD", "test")
-#     email = "niels@pollinations.ai"
-#     session = client.auth.sign_in(email=email, password=random_password)
+#     email = "thaferlach@gmail.com"
+#     try:
+#         session = client.auth.sign_in(email=email, password=random_password)
+#     except:  # noqa
+#         client.auth.sign_up(email=email, password=random_password)
+#         print(email, random_password)
+#         breakpoint()
+#         session = client.auth.sign_in(email=email, password=random_password)
 #     return session.access_token
 
 
@@ -47,7 +53,7 @@ def generate_pollinations_frontend_token() -> str:
 
 def get_lemonade_request(uncached=False):
     request = {
-        "image": "replicate:pollinations/lemonade-preset-2",
+        "image": "replicate:pollinations/lemonade-preset-3",
         "input": {
             "image": "https://www.ifolor.de/content/dam/ifolor/inspire-gallery/inspirationen/selbstportraet-selfie/inspire_selbstportraet_selfie_1200px_header.jpg.transform/w1440/q90/image.jpg?inspire_selbstportraet_selfie_1200px_header.jpg"
         },

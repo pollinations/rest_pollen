@@ -16,7 +16,7 @@ class WebsockerClosed(Exception):
     pass
 
 
-def ws_client(backend, request):
+def ws_client(backend, request, message_id=0):
     backends = {
         "legacy": "wss://rest.pollinations.ai",
         "prod": "wss://worker-prod.pollinations.ai",
@@ -28,7 +28,8 @@ def ws_client(backend, request):
     print(request)
 
     def on_message(ws, message):
-        print(json.loads(message))
+        with open(f"message_{message_id}.json", "w") as f:
+            f.write(message)
 
     def on_error(ws, error):
         raise error
@@ -58,4 +59,8 @@ if __name__ == "__main__":
     # ws_client("local", get_stablediffusion_request(True))
     # ws_client("local", get_stablediffusion_request())
     # ws_client("local", get_lemonade_request())
-    ws_client("local", get_lemonade_request(True))
+
+    # ws_client("dev", get_lemonade_request(True), message_id="lemonade_uncached_dev")
+    ws_client("dev", get_lemonade_request(False), message_id="lemonade_cached_dev")
+    # ws_client("local", get_lemonade_request(True), message_id="lemonade_uncached")
+    # ws_client("local", get_lemonade_request(False), message_id='lemonade_cached')

@@ -412,8 +412,8 @@ def run_on_replicate(pollen_request: PollenRequest) -> PollenResponse:
 
 
 def run_with_replicate(pollen_request: PollenRequest) -> PollenResponse:
-    model_name = pollen_request.image.split(":")[1]
-    model = replicate.models.get(model_name)
+    model_image = pollen_request.image.replace("replicate:", "")
+    model = replicate.models.get(model_image).versions.list()[0]
     output = model.predict(**pollen_request.input)
     if inspect.isgenerator(output):
         output = list(output)

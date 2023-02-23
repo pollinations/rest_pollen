@@ -60,5 +60,7 @@ if __name__ == "__main__":
     # ws_client("local", get_stablediffusion_request())
     # ws_client("local", get_lemonade_request())
 
-    ws_client("local", get_lemonade_request(True), message_id="lemonade_uncached")
+    # ws_client("dev", get_lemonade_request(True), message_id="lemonade_uncached_dev")
+    ws_client("dev", get_lemonade_request(False), message_id="lemonade_cached_dev")
+    # ws_client("local", get_lemonade_request(True), message_id="lemonade_uncached")
     # ws_client("local", get_lemonade_request(False), message_id='lemonade_cached')
